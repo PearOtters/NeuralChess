@@ -16,16 +16,36 @@ namespace NeuralChess.Engine
         public static List<Move> GenerateAllMoves(Board board)
         {
             List<Move> moves = [];
-            GenerateWhitePawnMoves(board, moves);
-            GenerateWhiteKnightMoves(board, moves);
+            if (board.ActiveColour == Colour.White)
+            {
+                GenerateWhitePawnMoves(board, moves);
+                GenerateWhiteKnightMoves(board, moves);
+                GenerateWhiteBishopMoves(board, moves);
+                GenerateWhiteRookMoves(board, moves);
+                GenerateWhiteQueenMoves(board, moves);
+                GenerateWhiteKingMoves(board, moves);
+            }
+            else
+            {
+                GenerateBlackPawnMoves(board, moves);
+                GenerateBlackKnightMoves(board, moves);
+                GenerateBlackBishopMoves(board, moves);
+                GenerateBlackRookMoves(board, moves);
+                GenerateBlackQueenMoves(board, moves);
+                GenerateBlackKingMoves(board, moves);
+            }
+            
             return moves;
         }
 
         public static void GenerateWhitePawnMoves(Board board, List<Move> moves)
         {
             ulong pawns = board.Pieces[Piece.WhitePawn];
-            ulong singlePushes = (pawns << 8) & ~board.AllPieces;
-            ExtractMoves(singlePushes, -8, moves);
+            ulong u1 = (pawns << 8) & ~board.AllPieces;
+            ExtractMoves(u1, -8, moves);
+
+            ulong u2 = (u1 << 8) & ~board.AllPieces & 0x00000000FF000000UL;
+            ExtractMoves(u2, -16, moves);
 
             ulong u1l1 = ((pawns & NotAFile)  << 7) & board.Colours[Colour.Black];
             ExtractMoves(u1l1, -7, moves);
@@ -34,10 +54,56 @@ namespace NeuralChess.Engine
             ExtractMoves(u1r1, -9, moves);
         }
 
+        public static void GenerateBlackPawnMoves(Board board, List<Move> moves)
+        {
+            ulong pawns = board.Pieces[Piece.BlackPawn];
+            ulong d1 = (pawns >> 8) & ~board.AllPieces;
+            ExtractMoves(d1, 8, moves);
+
+            ulong d2 = (d1 >> 8) & ~board.AllPieces & 0x000000FF00000000UL;
+            ExtractMoves(d2, 16, moves);
+
+            ulong d1r1 = ((pawns & NotHFile) >> 7) & board.Colours[Colour.White];
+            ExtractMoves(d1r1, 7, moves);
+
+            ulong d1l1 = ((pawns & NotAFile) >> 9) & board.Colours[Colour.White];
+            ExtractMoves(d1l1, 9, moves);
+        }
+
         public static void GenerateWhiteKnightMoves(Board board, List<Move> moves)
         {
             ulong knights = board.Pieces[Piece.WhiteKnight];
             ulong validSquares = ~board.Colours[Colour.White];
+
+            ulong u2l1 = ((knights & NotAFile) << 15) & validSquares;
+            ExtractMoves(u2l1, -15, moves);
+
+            ulong u2r1 = ((knights & NotHFile) << 17) & validSquares;
+            ExtractMoves(u2r1, -17, moves);
+
+            ulong d2l1 = ((knights & NotAFile) >> 17) & validSquares;
+            ExtractMoves(d2l1, 17, moves);
+
+            ulong d2r1 = ((knights & NotHFile) >> 15) & validSquares;
+            ExtractMoves(d2r1, 15, moves);
+
+            ulong u1l2 = ((knights & NotABFile) << 6) & validSquares;
+            ExtractMoves(u1l2, -6, moves);
+
+            ulong u1r2 = ((knights & NotGHFile) << 10) & validSquares;
+            ExtractMoves(u1r2, -10, moves);
+
+            ulong d1l2 = ((knights & NotABFile) >> 10) & validSquares;
+            ExtractMoves(d1l2, 10, moves);
+
+            ulong d1r2 = ((knights & NotGHFile) >> 6) & validSquares;
+            ExtractMoves(d1r2, 6, moves);
+        }
+
+        public static void GenerateBlackKnightMoves(Board board, List<Move> moves)
+        {
+            ulong knights = board.Pieces[Piece.BlackKnight];
+            ulong validSquares = ~board.Colours[Colour.Black];
 
             ulong u2l1 = ((knights & NotAFile) << 15) & validSquares;
             ExtractMoves(u2l1, -15, moves);
@@ -100,6 +166,42 @@ namespace NeuralChess.Engine
             }
         }
 
+        public static void GenerateBlackBishopMoves(Board board, List<Move> moves)
+        {
+            ulong bishops = board.Pieces[Piece.BlackBishop];
+            ulong notWhite = ~board.Colours[Colour.White];
+            ulong notBlack = ~board.Colours[Colour.Black];
+
+            ulong posu1l1 = bishops;
+            ulong posu1r1 = bishops;
+            ulong posd1l1 = bishops;
+            ulong posd1r1 = bishops;
+
+            for (int i = 1; i < 8; i++)
+            {
+                ulong u1l1 = ((posu1l1 & NotAFile) << 7) & notBlack;
+                ExtractMoves(u1l1, -7 * i, moves);
+                posu1l1 = u1l1 & notWhite;
+
+                ulong u1r1 = ((posu1r1 & NotHFile) << 9) & notBlack;
+                ExtractMoves(u1r1, -9 * i, moves);
+                posu1r1 = u1r1 & notWhite;
+
+                ulong d1l1 = ((posd1l1 & NotAFile) >> 9) & notBlack;
+                ExtractMoves(d1l1, 9 * i, moves);
+                posd1l1 = d1l1 & notWhite;
+
+                ulong d1r1 = ((posd1r1 & NotHFile) >> 7) & notBlack;
+                ExtractMoves(d1r1, 7 * i, moves);
+                posd1r1 = d1r1 & notWhite;
+
+                if ((posu1l1 | posu1r1 | posd1l1 | posd1r1) == 0)
+                {
+                    break;
+                }
+            }
+        }
+
         public static void GenerateWhiteRookMoves(Board board, List<Move> moves)
         {
             ulong rooks = board.Pieces[Piece.WhiteRook];
@@ -128,6 +230,42 @@ namespace NeuralChess.Engine
                 ulong r1 = ((posr1 & NotHFile) << 1) & notWhite;
                 ExtractMoves(r1, -1 * i, moves);
                 posr1 = r1 & notBlack;
+
+                if ((posu1 | posd1 | posl1 | posr1) == 0)
+                {
+                    break;
+                }
+            }
+        }
+
+        public static void GenerateBlackRookMoves(Board board, List<Move> moves)
+        {
+            ulong rooks = board.Pieces[Piece.BlackRook];
+            ulong notWhite = ~board.Colours[Colour.White];
+            ulong notBlack = ~board.Colours[Colour.Black];
+
+            ulong posu1 = rooks;
+            ulong posd1 = rooks;
+            ulong posl1 = rooks;
+            ulong posr1 = rooks;
+
+            for (int i = 1; i < 8; i++)
+            {
+                ulong u1 = (posu1 << 8) & notBlack;
+                ExtractMoves(u1, -8 * i, moves);
+                posu1 = u1 & notWhite;
+
+                ulong d1 = (posd1 >> 8) & notBlack;
+                ExtractMoves(d1, 8 * i, moves);
+                posd1 = d1 & notWhite;
+
+                ulong l1 = ((posl1 & NotAFile) >> 1) & notBlack;
+                ExtractMoves(l1, 1 * i, moves);
+                posl1 = l1 & notWhite;
+
+                ulong r1 = ((posr1 & NotHFile) << 1) & notBlack;
+                ExtractMoves(r1, -1 * i, moves);
+                posr1 = r1 & notWhite;
 
                 if ((posu1 | posd1 | posl1 | posr1) == 0)
                 {
@@ -192,6 +330,62 @@ namespace NeuralChess.Engine
             }
         }
 
+        public static void GenerateBlackQueenMoves(Board board, List<Move> moves)
+        {
+            ulong queens = board.Pieces[Piece.BlackQueen];
+            ulong notWhite = ~board.Colours[Colour.White];
+            ulong notBlack = ~board.Colours[Colour.Black];
+
+            ulong posu1 = queens;
+            ulong posd1 = queens;
+            ulong posl1 = queens;
+            ulong posr1 = queens;
+            ulong posu1l1 = queens;
+            ulong posu1r1 = queens;
+            ulong posd1l1 = queens;
+            ulong posd1r1 = queens;
+
+            for (int i = 1; i < 8; i++)
+            {
+                ulong u1 = (posu1 << 8) & notBlack;
+                ExtractMoves(u1, -8 * i, moves);
+                posu1 = u1 & notWhite;
+
+                ulong d1 = (posd1 >> 8) & notBlack;
+                ExtractMoves(d1, 8 * i, moves);
+                posd1 = d1 & notWhite;
+
+                ulong l1 = ((posl1 & NotAFile) >> 1) & notBlack;
+                ExtractMoves(l1, 1 * i, moves);
+                posl1 = l1 & notWhite;
+
+                ulong r1 = ((posr1 & NotHFile) << 1) & notBlack;
+                ExtractMoves(r1, -1 * i, moves);
+                posr1 = r1 & notWhite;
+
+                ulong u1l1 = ((posu1l1 & NotAFile) << 7) & notBlack;
+                ExtractMoves(u1l1, -7 * i, moves);
+                posu1l1 = u1l1 & notWhite;
+
+                ulong u1r1 = ((posu1r1 & NotHFile) << 9) & notBlack;
+                ExtractMoves(u1r1, -9 * i, moves);
+                posu1r1 = u1r1 & notWhite;
+
+                ulong d1l1 = ((posd1l1 & NotAFile) >> 9) & notBlack;
+                ExtractMoves(d1l1, 9 * i, moves);
+                posd1l1 = d1l1 & notWhite;
+
+                ulong d1r1 = ((posd1r1 & NotHFile) >> 7) & notBlack;
+                ExtractMoves(d1r1, 7 * i, moves);
+                posd1r1 = d1r1 & notWhite;
+
+                if ((posu1 | posd1 | posl1 | posr1 | posu1l1 | posu1r1 | posd1l1 | posd1r1) == 0)
+                {
+                    break;
+                }
+            }
+        }
+
         public static void GenerateWhiteKingMoves(Board board, List<Move> moves)
         {
             ulong kings = board.Pieces[Piece.WhiteKing];
@@ -219,6 +413,36 @@ namespace NeuralChess.Engine
             ExtractMoves(d1l1, 9, moves);
 
             ulong d1r1 = ((kings & NotHFile) >> 7) & notWhite;
+            ExtractMoves(d1r1, 7, moves);
+        }
+
+        public static void GenerateBlackKingMoves(Board board, List<Move> moves)
+        {
+            ulong kings = board.Pieces[Piece.BlackKing];
+            ulong notBlack= ~board.Colours[Colour.Black];
+
+            ulong u1 = (kings << 8) & notBlack;
+            ExtractMoves(u1, -8, moves);
+
+            ulong d1 = (kings >> 8) & notBlack;
+            ExtractMoves(d1, 8, moves);
+
+            ulong l1 = ((kings & NotAFile) >> 1) & notBlack;
+            ExtractMoves(l1, 1, moves);
+
+            ulong r1 = ((kings & NotHFile) << 1) & notBlack;
+            ExtractMoves(r1, -1, moves);
+
+            ulong u1l1 = ((kings & NotAFile) << 7) & notBlack;
+            ExtractMoves(u1l1, -7, moves);
+
+            ulong u1r1 = ((kings & NotHFile) << 9) & notBlack;
+            ExtractMoves(u1r1, -9, moves);
+
+            ulong d1l1 = ((kings & NotAFile) >> 9) & notBlack;
+            ExtractMoves(d1l1, 9, moves);
+
+            ulong d1r1 = ((kings & NotHFile) >> 7) & notBlack;
             ExtractMoves(d1r1, 7, moves);
         }
 
