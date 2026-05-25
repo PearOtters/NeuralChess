@@ -34,7 +34,6 @@ namespace NeuralChess.Engine
         internal int ActiveColour = Colour.White;
 
 
-        private static readonly string regular_start = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
         private static readonly Dictionary<char, int> PieceMap = new Dictionary<char, int>
         {
             {'P', Piece.WhitePawn}, {'N', Piece.WhiteKnight}, {'B', Piece.WhiteBishop},
@@ -46,11 +45,6 @@ namespace NeuralChess.Engine
         public Board(string starting_pos)
         {
             LoadPositionFromFen(starting_pos);
-        }
-
-        public Board() : this(regular_start)
-        {
-
         }
 
         private void LoadPositionFromFen(string fen)

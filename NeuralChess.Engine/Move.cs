@@ -6,11 +6,39 @@ namespace NeuralChess.Engine
 {
     public class Move
     {
-        int fromSquare, toSquare;
+        public int SelectedPiece;
+        public int FromSquare, ToSquare;
+
+        public Move(int piece, int fromSquare, int toSquare)
+        {
+            SelectedPiece = piece;
+            this.FromSquare = fromSquare;
+            this.ToSquare = toSquare;
+        }
+
         public Move(int fromSquare, int toSquare)
         {
-            this.fromSquare = fromSquare;
-            this.toSquare = toSquare;
+            this.FromSquare = fromSquare;
+            this.ToSquare = toSquare;
+        }
+
+        public void MovePiece(Board board)
+        {
+            ulong boardPiece = board.Pieces[SelectedPiece];
+            boardPiece ^= 1UL << FromSquare;
+            boardPiece |= 1UL << ToSquare;
+            board.Pieces[SelectedPiece] = boardPiece;
+            if (SelectedPiece < Piece.BlackPawn)
+            {
+                board.Colours[Colour.White] = board.Pieces[Piece.WhitePawn] | board.Pieces[Piece.WhiteKnight] | board.Pieces[Piece.WhiteBishop] |
+                    board.Pieces[Piece.WhiteRook] | board.Pieces[Piece.WhiteQueen] | board.Pieces[Piece.WhiteKing];
+            }
+            else
+            {
+                board.Colours[Colour.Black] = board.Pieces[Piece.BlackPawn] | board.Pieces[Piece.BlackKnight] | board.Pieces[Piece.BlackBishop] |
+                    board.Pieces[Piece.BlackRook] | board.Pieces[Piece.BlackQueen] | board.Pieces[Piece.BlackKing];
+            }
+            board.AllPieces = board.Colours[Colour.White] | board.Colours[Colour.Black];
         }
     }
 }
