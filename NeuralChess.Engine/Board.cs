@@ -48,9 +48,9 @@ namespace NeuralChess.Engine
             LoadPositionFromFen(starting_pos);
         }
 
-        public Board()
+        public Board() : this(regular_start)
         {
-            LoadPositionFromFen(regular_start);
+
         }
 
         private void LoadPositionFromFen(string fen)
