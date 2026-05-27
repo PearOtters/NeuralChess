@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Numerics;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -33,7 +35,11 @@ namespace NeuralChess.Engine
 
         public static bool IsLegal(Board board, Move validMove)
         {
-            return true;
+            Board clone = board.CloneBoard();
+            validMove.MovePiece(clone);
+            int kingIndex = BitOperations.TrailingZeroCount(clone.ActiveColour == Colour.White ? clone.Pieces[Piece.WhiteKing] : clone.Pieces[Piece.BlackKing]);
+            int attackingColour = clone.ActiveColour == Colour.White ? Colour.Black : Colour.White;
+            return !Board.IsSquareAttacked(kingIndex, attackingColour, clone);
         }
     }
 }

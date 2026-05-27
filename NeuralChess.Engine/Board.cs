@@ -47,6 +47,11 @@ namespace NeuralChess.Engine
             LoadPositionFromFen(starting_pos);
         }
 
+        public Board()
+        {
+
+        }
+
         private void LoadPositionFromFen(string fen)
         {
             Array.Clear(Pieces, 0, Pieces.Length);
@@ -99,6 +104,122 @@ namespace NeuralChess.Engine
                                     Pieces[Piece.BlackQueen] | Pieces[Piece.BlackKing];
 
             AllPieces = Colours[Colour.White] | Colours[Colour.Black];
+        }
+
+        public Board CloneBoard()
+        {
+            return new Board()
+            {
+                ActiveColour = this.ActiveColour,
+                AllPieces = this.AllPieces,
+                Colours = (ulong[])this.Colours.Clone(),
+                Pieces = (ulong[])this.Pieces.Clone()
+            };
+        }
+
+        public static bool IsSquareAttacked(int squareIndex, int attackingColour, Board board)
+        {
+            ulong attackSquare = 1UL << squareIndex;
+            ulong attackPawn = board.Pieces[Piece.WhitePawn + attackingColour * 6];
+            ulong attackKnight = board.Pieces[Piece.WhiteKnight + attackingColour * 6];
+            ulong attackBishop = board.Pieces[Piece.WhiteBishop + attackingColour * 6];
+            ulong attackRook = board.Pieces[Piece.WhiteRook + attackingColour * 6];
+            ulong attackQueen = board.Pieces[Piece.WhiteQueen + attackingColour * 6];
+            ulong attackKing = board.Pieces[Piece.WhiteKing + attackingColour * 6];
+            ulong notPiece = ~board.AllPieces;
+            ulong AtkColour = board.Colours[attackingColour];
+
+            ulong attackStraight = attackQueen | attackRook;
+            ulong attackDiagonal = attackQueen | attackBishop;
+
+            ulong posu1 = attackSquare;
+            ulong posd1 = attackSquare;
+            ulong posl1 = attackSquare;
+            ulong posr1 = attackSquare;
+            ulong posu1l1 = attackSquare;
+            ulong posu1r1 = attackSquare;
+            ulong posd1l1 = attackSquare;
+            ulong posd1r1 = attackSquare;
+
+            for (int i = 1; i < 8; i++)
+            {
+                ulong u1 = posu1 << 8;
+                if ((u1 & (attackStraight | (i == 1 ? attackKing : 0))) != 0) return true;
+                posu1 = u1 & notPiece;
+
+                ulong d1 = posd1 >> 8;
+                if ((d1 & (attackStraight | (i == 1 ? attackKing : 0))) != 0) return true;
+                posd1 = d1 & notPiece;
+
+                ulong l1 = (posl1 & Constants.NotAFile) >> 1;
+                if ((l1 & (attackStraight | (i == 1 ? attackKing : 0))) != 0) return true;
+                posl1 = l1 & notPiece;
+
+                ulong r1 = (posr1 & Constants.NotHFile) << 1;
+                if ((r1 & (attackStraight | (i == 1 ? attackKing : 0))) != 0) return true;
+                posr1 = r1 & notPiece;
+
+                ulong u1l1 = (posu1l1 & Constants.NotAFile) << 7;
+                if ((u1l1 & (attackDiagonal | (i == 1 ? attackKing : 0))) != 0) return true;
+                posu1l1 = u1l1 & notPiece;
+
+                ulong u1r1 = (posu1r1 & Constants.NotHFile) << 9;
+                if ((u1r1 & (attackDiagonal | (i == 1 ? attackKing : 0))) != 0) return true;
+                posu1r1 = u1r1 & notPiece;
+
+                ulong d1l1 = (posd1l1 & Constants.NotAFile) >> 9;
+                if ((d1l1 & (attackDiagonal | (i == 1 ? attackKing : 0))) != 0) return true;
+                posd1l1 = d1l1 & notPiece;
+
+                ulong d1r1 = (posd1r1 & Constants.NotHFile) >> 7;
+                if ((d1r1 & (attackDiagonal | (i == 1 ? attackKing : 0))) != 0) return true;
+                posd1r1 = d1r1 & notPiece;
+
+                if ((posu1 | posd1 | posl1 | posr1 | posu1l1 | posu1r1 | posd1l1 | posd1r1) == 0) break;
+            }
+
+            ulong u2l1 = (attackSquare & Constants.NotAFile) << 15;
+            if ((u2l1 & attackKnight) != 0) return true;
+
+            ulong u2r1 = (attackSquare & Constants.NotHFile) << 17;
+            if ((u2r1 & attackKnight) != 0) return true;
+
+            ulong d2l1 = (attackSquare & Constants.NotAFile) >> 17;
+            if ((d2l1 & attackKnight) != 0) return true;
+
+            ulong d2r1 = (attackSquare & Constants.NotHFile) >> 15;
+            if ((d2r1 & attackKnight) != 0) return true;
+
+            ulong u1l2 = (attackSquare & Constants.NotABFile) << 6;
+            if ((u1l2 & attackKnight) != 0) return true;
+
+            ulong u1r2 = (attackSquare & Constants.NotGHFile) << 10;
+            if ((u1r2 & attackKnight) != 0) return true;
+
+            ulong d1l2 = (attackSquare & Constants.NotABFile) >> 10;
+            if ((d1l2 & attackKnight) != 0) return true;
+
+            ulong d1r2 = (attackSquare & Constants.NotGHFile) >> 6;
+            if ((d1r2 & attackKnight) != 0) return true;
+
+            if (attackingColour == Colour.White)
+            {
+                ulong d1l1 = (attackSquare & Constants.NotAFile) >> 9;
+                if ((d1l1 & attackPawn) != 0) return true;
+
+                ulong d1r1 = (attackSquare & Constants.NotHFile) >> 7;
+                if ((d1r1 & attackPawn) != 0) return true;
+            }
+            else
+            {
+                ulong u1l1 = (attackSquare & Constants.NotAFile) << 7;
+                if ((u1l1 & attackPawn) != 0) return true;
+
+                ulong u1r1 = (attackSquare & Constants.NotHFile) << 9;
+                if ((u1r1 & attackPawn) != 0) return true;
+            }
+
+            return false;
         }
     }
 }
