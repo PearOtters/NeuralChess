@@ -19,7 +19,7 @@ namespace NeuralChess.Engine
             int fromSquare = (fromRank - '1') * 8 + (fromFile - 'A');
             int toSquare = (toRank - '1') * 8 + (toFile - 'A');
 
-            List<Move> moves = MoveParser.GenerateAllMoves(board);
+            List<Move> moves = MoveGenerator.GenerateAllMoves(board);
             Move? validMove = moves.FirstOrDefault(m => m.ToSquare == toSquare && m.FromSquare == fromSquare);
 
             if (validMove == null) return false;
