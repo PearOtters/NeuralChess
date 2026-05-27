@@ -6,7 +6,6 @@ namespace NeuralChess.Engine
 {
     public class PlayGame
     {
-        private static readonly string regular_start = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
         private static int Winner = -1;
 
         public static void StartGame(string starting_pos)
@@ -34,7 +33,7 @@ namespace NeuralChess.Engine
 
         public static void StartGame()
         {
-            StartGame(regular_start);
+            StartGame(Constants.regular_start);
         }
     }
 }
