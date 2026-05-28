@@ -461,6 +461,24 @@ namespace NeuralChess.Engine
             ExtractMoves(piece, d1r1, 7, moves);
         }
 
+        public static void GenerateCastleMoves(Board board, ulong transitPath, int destination, int colour, List<Move> moves)
+        {
+            ulong king = board.Pieces[5 + colour * 6];
+            int attackColour = Colour.White == colour ? Colour.Black : Colour.White;
+
+            if (Board.IsSquareAttacked(BitOperations.TrailingZeroCount(king), attackColour, board)) return;
+
+            while (transitPath != 0)
+            {
+                int pathSquare = BitOperations.LeadingZeroCount(transitPath);
+                transitPath &= (transitPath - 1);
+                if (Board.IsSquareAttacked(pathSquare, attackColour, board)) return;
+                if (((1UL << pathSquare) & board.AllPieces) != 0) return;
+            }
+            int piece = colour == Colour.White ? Piece.WhiteKing : Piece.BlackKing;
+            moves.Add(new Move(piece, BitOperations.TrailingZeroCount(king), destination));
+        }
+
         public static void ExtractMoves(int piece, ulong bitboard, int offset, List<Move> moves)
         {
             while (bitboard != 0)
