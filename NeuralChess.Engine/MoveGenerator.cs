@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Numerics;
+using System.Runtime.InteropServices;
 using System.Text;
 
 namespace NeuralChess.Engine
@@ -11,6 +13,7 @@ namespace NeuralChess.Engine
         public static readonly ulong NotABFile = 0xFCFCFCFCFCFCFCFCUL;
         public static readonly ulong NotHFile = 0x7F7F7F7F7F7F7F7FUL;
         public static readonly ulong NotGHFile = 0x3F3F3F3F3F3F3F3FUL;
+
         public static readonly string regular_start = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
     }
 
@@ -428,6 +431,17 @@ namespace NeuralChess.Engine
 
             ulong d1r1 = ((kings & Constants.NotHFile) >> 7) & notWhite;
             ExtractMoves(piece, d1r1, 7, moves);
+
+            if ((board.CastleRights & CastlingRights.WK) != 0)
+            {
+                ulong transitPath = r1 | ((r1 & Constants.NotGHFile) << 1);
+                GenerateCastleMoves(board, transitPath, BitOperations.TrailingZeroCount(transitPath) + 1, Colour.White, moves);
+            }
+            if ((board.CastleRights & CastlingRights.WQ) != 0)
+            {
+                ulong transitPath = l1 | ((l1 & Constants.NotABFile) >> 1);
+                GenerateCastleMoves(board, transitPath, BitOperations.TrailingZeroCount(transitPath), Colour.White, moves);
+            }
         }
 
         public static void GenerateBlackKingMoves(Board board, List<Move> moves)
@@ -459,6 +473,17 @@ namespace NeuralChess.Engine
 
             ulong d1r1 = ((kings & Constants.NotHFile) >> 7) & notBlack;
             ExtractMoves(piece, d1r1, 7, moves);
+
+            if ((board.CastleRights & CastlingRights.BK) != 0)
+            {
+                ulong transitPath = r1 | ((r1 & Constants.NotGHFile) << 1);
+                GenerateCastleMoves(board, transitPath, BitOperations.TrailingZeroCount(transitPath) + 1, Colour.Black, moves);
+            }
+            if ((board.CastleRights & CastlingRights.BQ) != 0)
+            {
+                ulong transitPath = l1 | ((l1 & Constants.NotABFile) >> 1);
+                GenerateCastleMoves(board, transitPath, BitOperations.TrailingZeroCount(transitPath), Colour.Black, moves);
+            }
         }
 
         public static void GenerateCastleMoves(Board board, ulong transitPath, int destination, int colour, List<Move> moves)
@@ -467,16 +492,15 @@ namespace NeuralChess.Engine
             int attackColour = Colour.White == colour ? Colour.Black : Colour.White;
 
             if (Board.IsSquareAttacked(BitOperations.TrailingZeroCount(king), attackColour, board)) return;
-
             while (transitPath != 0)
             {
-                int pathSquare = BitOperations.LeadingZeroCount(transitPath);
+                int pathSquare = BitOperations.TrailingZeroCount(transitPath);
                 transitPath &= (transitPath - 1);
                 if (Board.IsSquareAttacked(pathSquare, attackColour, board)) return;
                 if (((1UL << pathSquare) & board.AllPieces) != 0) return;
             }
             int piece = colour == Colour.White ? Piece.WhiteKing : Piece.BlackKing;
-            moves.Add(new Move(piece, BitOperations.TrailingZeroCount(king), destination));
+            moves.Add(new Move(piece, BitOperations.TrailingZeroCount(king), destination, SpecialMove.CASTLE));
         }
 
         public static void ExtractMoves(int piece, ulong bitboard, int offset, List<Move> moves)

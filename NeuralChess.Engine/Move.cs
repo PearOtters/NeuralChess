@@ -4,22 +4,32 @@ using System.Text;
 
 namespace NeuralChess.Engine
 {
+    public enum SpecialMove
+    {
+        NONE,
+        CASTLE,
+    }
+
     public class Move
     {
-        public int SelectedPiece;
-        public int FromSquare, ToSquare;
+        internal SpecialMove Special;
+        internal int SelectedPiece;
+        internal int FromSquare, ToSquare;
 
         public Move(int piece, int fromSquare, int toSquare)
         {
             SelectedPiece = piece;
-            this.FromSquare = fromSquare;
-            this.ToSquare = toSquare;
+            FromSquare = fromSquare;
+            ToSquare = toSquare;
+            Special = SpecialMove.NONE;
         }
 
-        public Move(int fromSquare, int toSquare)
+        public Move(int piece, int fromSquare, int toSquare, SpecialMove special)
         {
-            this.FromSquare = fromSquare;
-            this.ToSquare = toSquare;
+            SelectedPiece = piece;
+            FromSquare = fromSquare;
+            ToSquare = toSquare;
+            Special = special;
         }
 
         public void MovePiece(Board board)
@@ -40,6 +50,49 @@ namespace NeuralChess.Engine
             board.Colours[Colour.Black] = board.Pieces[Piece.BlackPawn] | board.Pieces[Piece.BlackKnight] | board.Pieces[Piece.BlackBishop] |
                 board.Pieces[Piece.BlackRook] | board.Pieces[Piece.BlackQueen] | board.Pieces[Piece.BlackKing];
             board.AllPieces = board.Colours[Colour.White] | board.Colours[Colour.Black];
+
+            if (Special == SpecialMove.CASTLE)
+            {
+                if (ToSquare > FromSquare)
+                {
+                    new Move(SelectedPiece - 2, ToSquare + 1, ToSquare - 1).MovePiece(board);
+                }
+                else
+                {
+                    new Move(SelectedPiece - 2, ToSquare - 2, ToSquare + 1).MovePiece(board);
+                }
+            }
+
+            if (SelectedPiece == Piece.WhiteRook)
+            {
+                if ((ToSquare > FromSquare) && ((board.CastleRights & CastlingRights.WK) != 0))
+                {
+                    board.CastleRights &= ~CastlingRights.WK;
+                }
+                else if ((ToSquare < FromSquare) && ((board.CastleRights & CastlingRights.WQ) != 0))
+                {
+                    board.CastleRights &= ~CastlingRights.WQ;
+                }
+            }
+            else if (SelectedPiece == Piece.BlackRook)
+            {
+                if ((ToSquare > FromSquare) && ((board.CastleRights & CastlingRights.BK) != 0))
+                {
+                    board.CastleRights &= ~CastlingRights.BK;
+                }
+                else if ((ToSquare < FromSquare) && ((board.CastleRights & CastlingRights.BQ) != 0))
+                {
+                    board.CastleRights &= ~CastlingRights.BQ;
+                }
+            }
+            else if (SelectedPiece == Piece.WhiteKing)
+            {
+                board.CastleRights &= ~(CastlingRights.WK | CastlingRights.WQ);
+            }
+            else if (SelectedPiece == Piece.BlackKing)
+            {
+                board.CastleRights &= ~(CastlingRights.BK | CastlingRights.BQ);
+            }
         }
     }
 }

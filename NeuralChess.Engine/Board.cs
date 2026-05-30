@@ -24,10 +24,20 @@ namespace NeuralChess.Engine
     internal static class Colour
     {
         public const int White = 0;
-        public const int Black = 1;
+        public const int Black = 1;     
     }
+
+    internal static class CastlingRights
+    {
+        public const uint WK = 1;
+        public const uint WQ = 2;
+        public const uint BK = 4;
+        public const uint BQ = 8;
+    }
+
     public class Board
     {
+        internal uint CastleRights;
         internal ulong[] Pieces = new ulong[12];
         internal ulong[] Colours = new ulong[2];
         internal ulong AllPieces;
@@ -90,6 +100,15 @@ namespace NeuralChess.Engine
                 ActiveColour = (fenParts[1] == "w") ? Colour.White : Colour.Black;
             }
 
+            CastleRights = 0; // Reset to 0 (0000) before reading
+            if (fenParts.Length > 2 && fenParts[2] != "-")
+            {
+                if (fenParts[2].Contains('K')) CastleRights |= CastlingRights.WK;
+                if (fenParts[2].Contains('Q')) CastleRights |= CastlingRights.WQ;
+                if (fenParts[2].Contains('k')) CastleRights |= CastlingRights.BK;
+                if (fenParts[2].Contains('q')) CastleRights |= CastlingRights.BQ;
+            }
+
             UpdateColours();
         }
 
@@ -110,6 +129,7 @@ namespace NeuralChess.Engine
         {
             return new Board()
             {
+                CastleRights = this.CastleRights,
                 ActiveColour = this.ActiveColour,
                 AllPieces = this.AllPieces,
                 Colours = (ulong[])this.Colours.Clone(),
@@ -127,7 +147,6 @@ namespace NeuralChess.Engine
             ulong attackQueen = board.Pieces[Piece.WhiteQueen + attackingColour * 6];
             ulong attackKing = board.Pieces[Piece.WhiteKing + attackingColour * 6];
             ulong notPiece = ~board.AllPieces;
-            ulong AtkColour = board.Colours[attackingColour];
 
             ulong attackStraight = attackQueen | attackRook;
             ulong attackDiagonal = attackQueen | attackBishop;
