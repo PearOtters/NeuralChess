@@ -63,36 +63,13 @@ namespace NeuralChess.Engine
                 }
             }
 
-            if (SelectedPiece == Piece.WhiteRook)
-            {
-                if ((ToSquare > FromSquare) && ((board.CastleRights & CastlingRights.WK) != 0))
-                {
-                    board.CastleRights &= ~CastlingRights.WK;
-                }
-                else if ((ToSquare < FromSquare) && ((board.CastleRights & CastlingRights.WQ) != 0))
-                {
-                    board.CastleRights &= ~CastlingRights.WQ;
-                }
-            }
-            else if (SelectedPiece == Piece.BlackRook)
-            {
-                if ((ToSquare > FromSquare) && ((board.CastleRights & CastlingRights.BK) != 0))
-                {
-                    board.CastleRights &= ~CastlingRights.BK;
-                }
-                else if ((ToSquare < FromSquare) && ((board.CastleRights & CastlingRights.BQ) != 0))
-                {
-                    board.CastleRights &= ~CastlingRights.BQ;
-                }
-            }
-            else if (SelectedPiece == Piece.WhiteKing)
-            {
-                board.CastleRights &= ~(CastlingRights.WK | CastlingRights.WQ);
-            }
-            else if (SelectedPiece == Piece.BlackKing)
-            {
-                board.CastleRights &= ~(CastlingRights.BK | CastlingRights.BQ);
-            }
+            if (SelectedPiece == Piece.WhiteKing) board.CastleRights &= ~(CastlingRights.WK | CastlingRights.WQ);
+            if (SelectedPiece == Piece.BlackKing) board.CastleRights &= ~(CastlingRights.BK | CastlingRights.BQ);
+
+            if (FromSquare == 0 || ToSquare == 0) board.CastleRights &= ~CastlingRights.WQ;
+            if (FromSquare == 7 || ToSquare == 7) board.CastleRights &= ~CastlingRights.WK;
+            if (FromSquare == 56 || ToSquare == 56) board.CastleRights &= ~CastlingRights.BQ;
+            if (FromSquare == 63 || ToSquare == 63) board.CastleRights &= ~CastlingRights.BK;
         }
     }
 }

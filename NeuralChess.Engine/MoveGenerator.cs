@@ -439,8 +439,10 @@ namespace NeuralChess.Engine
             }
             if ((board.CastleRights & CastlingRights.WQ) != 0)
             {
-                ulong transitPath = l1 | ((l1 & Constants.NotABFile) >> 1);
-                GenerateCastleMoves(board, transitPath, BitOperations.TrailingZeroCount(transitPath), Colour.White, moves);
+                if (((1UL << 1) & board.AllPieces) != 0) {
+                    ulong transitPath = l1 | ((l1 & Constants.NotABFile) >> 1);
+                    GenerateCastleMoves(board, transitPath, BitOperations.TrailingZeroCount(transitPath), Colour.White, moves);
+                }
             }
         }
 
@@ -481,8 +483,11 @@ namespace NeuralChess.Engine
             }
             if ((board.CastleRights & CastlingRights.BQ) != 0)
             {
-                ulong transitPath = l1 | ((l1 & Constants.NotABFile) >> 1);
-                GenerateCastleMoves(board, transitPath, BitOperations.TrailingZeroCount(transitPath), Colour.Black, moves);
+                if (((1UL << 57) & board.AllPieces) != 0)
+                {
+                    ulong transitPath = l1 | ((l1 & Constants.NotABFile) >> 1);
+                    GenerateCastleMoves(board, transitPath, BitOperations.TrailingZeroCount(transitPath), Colour.Black, moves);
+                }
             }
         }
 
