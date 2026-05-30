@@ -8,6 +8,7 @@ namespace NeuralChess.Engine
     {
         NONE,
         CASTLE,
+        PROMOTION
     }
 
     public class Move
@@ -15,6 +16,7 @@ namespace NeuralChess.Engine
         internal SpecialMove Special;
         internal int SelectedPiece;
         internal int FromSquare, ToSquare;
+        internal int PromotionPiece = -1;
 
         public Move(int piece, int fromSquare, int toSquare)
         {
@@ -42,6 +44,10 @@ namespace NeuralChess.Engine
 
             ulong boardPiece = board.Pieces[SelectedPiece];
             boardPiece ^= 1UL << FromSquare;
+            if (Special == SpecialMove.PROMOTION)
+            {
+                boardPiece = board.Pieces[PromotionPiece];
+            }
             boardPiece |= 1UL << ToSquare;
             board.Pieces[SelectedPiece] = boardPiece;
 
@@ -70,6 +76,19 @@ namespace NeuralChess.Engine
             if (FromSquare == 7 || ToSquare == 7) board.CastleRights &= ~CastlingRights.WK;
             if (FromSquare == 56 || ToSquare == 56) board.CastleRights &= ~CastlingRights.BQ;
             if (FromSquare == 63 || ToSquare == 63) board.CastleRights &= ~CastlingRights.BK;
+        }
+
+        public static void Promote(Board board, int fromSquare, int promoteToPiece)
+        {
+            ulong pawn = 1UL << fromSquare;
+            board.Pieces[promoteToPiece < 6 ? Piece.WhitePawn : Piece.BlackPawn] &= ~pawn;
+            board.Pieces[promoteToPiece] |= pawn;
+
+            board.Colours[Colour.White] = board.Pieces[Piece.WhitePawn] | board.Pieces[Piece.WhiteKnight] | board.Pieces[Piece.WhiteBishop] |
+               board.Pieces[Piece.WhiteRook] | board.Pieces[Piece.WhiteQueen] | board.Pieces[Piece.WhiteKing];
+            board.Colours[Colour.Black] = board.Pieces[Piece.BlackPawn] | board.Pieces[Piece.BlackKnight] | board.Pieces[Piece.BlackBishop] |
+                board.Pieces[Piece.BlackRook] | board.Pieces[Piece.BlackQueen] | board.Pieces[Piece.BlackKing];
+            board.AllPieces = board.Colours[Colour.White] | board.Colours[Colour.Black];
         }
     }
 }

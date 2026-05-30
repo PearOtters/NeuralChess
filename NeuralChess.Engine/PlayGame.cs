@@ -17,7 +17,7 @@ namespace NeuralChess.Engine
                 bool validMove = false;
                 string currentCol = board.ActiveColour == Colour.White ? "White" : "Black";
                 ConsoleDisplay.PrintBoard(board);
-                Console.WriteLine($"{currentCol} please make your first move in the format A2->A4");
+                Console.WriteLine($"{currentCol} please make your first move in the format A2->A4. If promoting please add letter to change at the end e.g A7->A8Q");
                 string? move = Console.ReadLine(); 
 
                 if (move != null)

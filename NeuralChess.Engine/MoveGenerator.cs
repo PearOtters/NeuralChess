@@ -510,11 +510,22 @@ namespace NeuralChess.Engine
 
         public static void ExtractMoves(int piece, ulong bitboard, int offset, List<Move> moves)
         {
+            int colour = piece < 6 ? Colour.White : Colour.Black;
             while (bitboard != 0)
             {
                 int toSquare = BitOperations.TrailingZeroCount(bitboard);
                 int fromSquare = toSquare + offset;
-                moves.Add(new Move(piece, fromSquare, toSquare));
+                if ((colour == Colour.White ? toSquare > 55 : toSquare < 8) && (piece == Piece.WhitePawn || piece == Piece.BlackPawn))
+                {
+                    moves.Add(new Move(piece, fromSquare, toSquare, SpecialMove.PROMOTION) { PromotionPiece = Piece.WhiteQueen + colour * 6 });
+                    moves.Add(new Move(piece, fromSquare, toSquare, SpecialMove.PROMOTION) { PromotionPiece = Piece.WhiteRook + colour * 6 });
+                    moves.Add(new Move(piece, fromSquare, toSquare, SpecialMove.PROMOTION) { PromotionPiece = Piece.WhiteKnight + colour * 6 });
+                    moves.Add(new Move(piece, fromSquare, toSquare, SpecialMove.PROMOTION) { PromotionPiece = Piece.WhiteBishop + colour * 6 });
+                }
+                else
+                {
+                    moves.Add(new Move(piece, fromSquare, toSquare);
+                }
                 bitboard &= (bitboard - 1);
             }
         }
