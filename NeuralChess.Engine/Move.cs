@@ -97,17 +97,54 @@ namespace NeuralChess.Engine
             }
         }
 
-        public static void Promote(Board board, int fromSquare, int promoteToPiece)
+        public string ToUCI()
         {
-            ulong pawn = 1UL << fromSquare;
-            board.Pieces[promoteToPiece < 6 ? Piece.WhitePawn : Piece.BlackPawn] &= ~pawn;
-            board.Pieces[promoteToPiece] |= pawn;
+            char fromFile = (char)('a' + (FromSquare % 8));
+            char fromRank = (char)('1' + (FromSquare / 8));
+            char toFile = (char)('a' + (ToSquare % 8));
+            char toRank = (char)('1' + (ToSquare / 8));
 
-            board.Colours[Colour.White] = board.Pieces[Piece.WhitePawn] | board.Pieces[Piece.WhiteKnight] | board.Pieces[Piece.WhiteBishop] |
-               board.Pieces[Piece.WhiteRook] | board.Pieces[Piece.WhiteQueen] | board.Pieces[Piece.WhiteKing];
-            board.Colours[Colour.Black] = board.Pieces[Piece.BlackPawn] | board.Pieces[Piece.BlackKnight] | board.Pieces[Piece.BlackBishop] |
-                board.Pieces[Piece.BlackRook] | board.Pieces[Piece.BlackQueen] | board.Pieces[Piece.BlackKing];
-            board.AllPieces = board.Colours[Colour.White] | board.Colours[Colour.Black];
+            string uci = $"{fromFile}{fromRank}{toFile}{toRank}";
+
+            if (Special == SpecialMove.PROMOTION)
+            {
+                int pieceType = PromotionPiece % 6;
+                if (pieceType == Piece.WhiteQueen) uci += "q";
+                else if (pieceType == Piece.WhiteRook) uci += "r";
+                else if (pieceType == Piece.WhiteKnight) uci += "n";
+                else if (pieceType == Piece.WhiteBishop) uci += "b";
+            }
+
+            return uci;
+        }
+
+        public static Move getMoveFromUCI(Board board, string uciString)
+        {
+            char fromFile = uciString[0];
+            char fromRank = uciString[1];
+            char toFile = uciString[2];
+            char toRank = uciString[3];
+
+            int fromSquare = fromFile - 'a' + (fromRank - '1') * 8;
+            int toSquare = toFile - 'a' + (toRank - '1') * 8;
+
+            int promotionPiece = -1;
+
+            if (uciString.Length > 4)
+            {
+                char promPiece = uciString[4];
+                if (promPiece == 'q') promotionPiece = Piece.WhiteQueen + board.ActiveColour * 6;
+                else if (promPiece == 'r') promotionPiece = Piece.WhiteRook + board.ActiveColour * 6;
+                else if (promPiece == 'n') promotionPiece = Piece.WhiteKnight + board.ActiveColour * 6;
+                else if (promPiece == 'b') promotionPiece = Piece.WhiteBishop + board.ActiveColour * 6;
+            }
+
+            List<Move> legalMoves = MoveGenerator.GenerateAllMoves(board);
+
+            return legalMoves.First(m =>
+                m.FromSquare == fromSquare &&
+                m.ToSquare == toSquare &&
+                m.PromotionPiece == promotionPiece);
         }
     }
 }

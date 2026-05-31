@@ -57,7 +57,7 @@ namespace NeuralChess.Engine
             LoadPositionFromFen(starting_pos);
         }
 
-        public Board()
+        public Board() : this(Constants.regular_start)
         {
 
         }
@@ -248,6 +248,18 @@ namespace NeuralChess.Engine
             }
 
             return false;
+        }
+
+        public int ReturnPieceAt(int pieceIndex)
+        {
+            for (int i = 0; i < 12; i++)
+            {
+                if ((Pieces[i] & 1UL << pieceIndex) != 0)
+                {
+                    return i;
+                }
+            }
+            return -1;
         }
     }
 }
