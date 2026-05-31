@@ -456,14 +456,20 @@ namespace NeuralChess.Engine
 
             if ((board.CastleRights & CastlingRights.WK) != 0)
             {
-                ulong transitPath = r1 | ((r1 & Constants.NotGHFile) << 1);
-                GenerateCastleMoves(board, transitPath, BitOperations.TrailingZeroCount(transitPath) + 1, Colour.White, moves);
+                ulong emptyMask = (1UL << 5) | (1UL << 6);
+                if ((board.AllPieces & emptyMask) == 0)
+                {
+                    GenerateCastleMoves(board, emptyMask, 6, Colour.White, moves);
+                }
             }
+
             if ((board.CastleRights & CastlingRights.WQ) != 0)
             {
-                if (((1UL << 1) & board.AllPieces) != 0) {
-                    ulong transitPath = l1 | ((l1 & Constants.NotABFile) >> 1);
-                    GenerateCastleMoves(board, transitPath, BitOperations.TrailingZeroCount(transitPath), Colour.White, moves);
+                ulong emptyMask = (1UL << 1) | (1UL << 2) | (1UL << 3);
+                if ((board.AllPieces & emptyMask) == 0)
+                {
+                    ulong attackPath = (1UL << 2) | (1UL << 3);
+                    GenerateCastleMoves(board, attackPath, 2, Colour.White, moves);
                 }
             }
         }
@@ -500,15 +506,20 @@ namespace NeuralChess.Engine
 
             if ((board.CastleRights & CastlingRights.BK) != 0)
             {
-                ulong transitPath = r1 | ((r1 & Constants.NotGHFile) << 1);
-                GenerateCastleMoves(board, transitPath, BitOperations.TrailingZeroCount(transitPath) + 1, Colour.Black, moves);
+                ulong emptyMask = (1UL << 61) | (1UL << 62);
+                if ((board.AllPieces & emptyMask) == 0)
+                {
+                    GenerateCastleMoves(board, emptyMask, 62, Colour.Black, moves);
+                }
             }
+
             if ((board.CastleRights & CastlingRights.BQ) != 0)
             {
-                if (((1UL << 57) & board.AllPieces) != 0)
+                ulong emptyMask = (1UL << 57) | (1UL << 58) | (1UL << 59);
+                if ((board.AllPieces & emptyMask) == 0)
                 {
-                    ulong transitPath = l1 | ((l1 & Constants.NotABFile) >> 1);
-                    GenerateCastleMoves(board, transitPath, BitOperations.TrailingZeroCount(transitPath), Colour.Black, moves);
+                    ulong attackPath = (1UL << 58) | (1UL << 59);
+                    GenerateCastleMoves(board, attackPath, 58, Colour.Black, moves);
                 }
             }
         }
