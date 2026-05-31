@@ -59,6 +59,17 @@ namespace NeuralChess.Engine
 
             ulong u1r1 = ((pawns & Constants.NotHFile) << 9) & board.Colours[Colour.Black];
             ExtractMoves(piece, u1r1, -9, moves);
+
+            if (board.EnPassantSquare != -1)
+            {
+                ulong EnPassantMask = 1UL << board.EnPassantSquare;
+
+                ulong capLeft = ((pawns & Constants.NotAFile) << 7) & EnPassantMask;
+                if (capLeft != 0) moves.Add(new Move(piece, board.EnPassantSquare - 7, board.EnPassantSquare, SpecialMove.EN_PASSANT));
+
+                ulong capRight = ((pawns & Constants.NotHFile) << 9) & EnPassantMask;
+                if (capRight != 0) moves.Add(new Move(piece, board.EnPassantSquare - 9, board.EnPassantSquare, SpecialMove.EN_PASSANT));
+            }
         }
 
         public static void GenerateBlackPawnMoves(Board board, List<Move> moves)
@@ -76,6 +87,17 @@ namespace NeuralChess.Engine
 
             ulong d1l1 = ((pawns & Constants.NotAFile) >> 9) & board.Colours[Colour.White];
             ExtractMoves(piece, d1l1, 9, moves);
+
+            if (board.EnPassantSquare != -1)
+            {
+                ulong EnPassantMask = 1UL << board.EnPassantSquare;
+
+                ulong capLeft = ((pawns & Constants.NotAFile) >> 9) & EnPassantMask;
+                if (capLeft != 0) moves.Add(new Move(piece, board.EnPassantSquare + 9, board.EnPassantSquare, SpecialMove.EN_PASSANT));
+
+                ulong capRight = ((pawns & Constants.NotHFile) >> 7) & EnPassantMask;
+                if (capRight != 0) moves.Add(new Move(piece, board.EnPassantSquare + 7, board.EnPassantSquare, SpecialMove.EN_PASSANT));
+            }
         }
 
         public static void GenerateWhiteKnightMoves(Board board, List<Move> moves)
@@ -524,7 +546,7 @@ namespace NeuralChess.Engine
                 }
                 else
                 {
-                    moves.Add(new Move(piece, fromSquare, toSquare);
+                    moves.Add(new Move(piece, fromSquare, toSquare));
                 }
                 bitboard &= (bitboard - 1);
             }

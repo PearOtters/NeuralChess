@@ -8,7 +8,8 @@ namespace NeuralChess.Engine
     {
         NONE,
         CASTLE,
-        PROMOTION
+        PROMOTION,
+        EN_PASSANT
     }
 
     public class Move
@@ -36,20 +37,29 @@ namespace NeuralChess.Engine
 
         public void MovePiece(Board board)
         {
+            board.EnPassantSquare = -1;
             ulong clearMask = ~(1UL << ToSquare);
             for (int i = 0; i < 12; i++)
             {
                 board.Pieces[i] &= clearMask;
             }
 
-            ulong boardPiece = board.Pieces[SelectedPiece];
-            boardPiece ^= 1UL << FromSquare;
+            board.Pieces[SelectedPiece] ^= 1UL << FromSquare;
             if (Special == SpecialMove.PROMOTION)
             {
-                boardPiece = board.Pieces[PromotionPiece];
+                board.Pieces[PromotionPiece] |= (1UL << ToSquare);
             }
-            boardPiece |= 1UL << ToSquare;
-            board.Pieces[SelectedPiece] = boardPiece;
+            else
+            {
+                board.Pieces[SelectedPiece] |= (1UL << ToSquare);
+            }
+
+            if (Special == SpecialMove.EN_PASSANT)
+            {
+                int capturedPawnSquare = SelectedPiece == Piece.WhitePawn ? ToSquare - 8 : ToSquare + 8;
+                int capturedPiece = SelectedPiece == Piece.WhitePawn ? Piece.BlackPawn : Piece.WhitePawn;
+                board.Pieces[capturedPiece] &= ~(1UL << capturedPawnSquare);
+            }
 
             board.Colours[Colour.White] = board.Pieces[Piece.WhitePawn] | board.Pieces[Piece.WhiteKnight] | board.Pieces[Piece.WhiteBishop] |
                 board.Pieces[Piece.WhiteRook] | board.Pieces[Piece.WhiteQueen] | board.Pieces[Piece.WhiteKing];
@@ -76,6 +86,15 @@ namespace NeuralChess.Engine
             if (FromSquare == 7 || ToSquare == 7) board.CastleRights &= ~CastlingRights.WK;
             if (FromSquare == 56 || ToSquare == 56) board.CastleRights &= ~CastlingRights.BQ;
             if (FromSquare == 63 || ToSquare == 63) board.CastleRights &= ~CastlingRights.BK;
+
+            if (SelectedPiece == Piece.WhitePawn && FromSquare + 16 == ToSquare)
+            {
+                board.EnPassantSquare = FromSquare + 8;
+            }
+            else if (SelectedPiece == Piece.BlackPawn && FromSquare - 16 == ToSquare)
+            {
+                board.EnPassantSquare = FromSquare - 8;
+            }
         }
 
         public static void Promote(Board board, int fromSquare, int promoteToPiece)

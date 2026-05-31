@@ -37,14 +37,14 @@ namespace NeuralChess.Engine
 
     public class Board
     {
-        internal uint CastleRights;
-        internal ulong[] Pieces = new ulong[12];
-        internal ulong[] Colours = new ulong[2];
-        internal ulong AllPieces;
-        internal int ActiveColour = Colour.White;
+        public uint CastleRights;
+        public ulong[] Pieces = new ulong[12];
+        public ulong[] Colours = new ulong[2];
+        public ulong AllPieces;
+        public int ActiveColour = Colour.White;
+        public int EnPassantSquare = -1;
 
-
-        private static readonly Dictionary<char, int> PieceMap = new Dictionary<char, int>
+        private static readonly Dictionary<char, int> PieceMap = new()
         {
             {'P', Piece.WhitePawn}, {'N', Piece.WhiteKnight}, {'B', Piece.WhiteBishop},
             {'R', Piece.WhiteRook}, {'Q', Piece.WhiteQueen}, {'K', Piece.WhiteKing},
@@ -100,13 +100,22 @@ namespace NeuralChess.Engine
                 ActiveColour = (fenParts[1] == "w") ? Colour.White : Colour.Black;
             }
 
-            CastleRights = 0; // Reset to 0 (0000) before reading
+            CastleRights = 0;
             if (fenParts.Length > 2 && fenParts[2] != "-")
             {
                 if (fenParts[2].Contains('K')) CastleRights |= CastlingRights.WK;
                 if (fenParts[2].Contains('Q')) CastleRights |= CastlingRights.WQ;
                 if (fenParts[2].Contains('k')) CastleRights |= CastlingRights.BK;
                 if (fenParts[2].Contains('q')) CastleRights |= CastlingRights.BQ;
+            }
+
+            EnPassantSquare = -1;
+            if (fenParts.Length > 3 && fenParts[3] != "-")
+            {
+                char f = char.ToUpper(fenParts[3][0]);
+                char r = fenParts[3][1];
+
+                EnPassantSquare = (r - '1') * 8 + (f - 'A');
             }
 
             UpdateColours();
