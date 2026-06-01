@@ -224,9 +224,11 @@ namespace NeuralChess.Engine
 
         public int GetValue(Board board)
         {
-            Board clone = board.CloneBoard();
-            MovePiece(clone);
-            return clone.GetBoardValue() - board.GetBoardValue();
+            int originalVal = board.GetBoardValue();
+            MovePiece(board);
+            int moveVal = board.GetBoardValue() - originalVal;
+            ReverseMove(board);
+            return moveVal;
         }
     }
 }
