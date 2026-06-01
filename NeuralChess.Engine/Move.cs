@@ -119,7 +119,6 @@ namespace NeuralChess.Engine
                 {
                     int capturedPawnSquare = SelectedPiece == Piece.WhitePawn ? ToSquare - 8 : ToSquare + 8;
                     board.Pieces[CapturedPiece] |= 1UL << capturedPawnSquare;
-                    board.EnPassantSquare = ToSquare;
                 }
                 else
                 {

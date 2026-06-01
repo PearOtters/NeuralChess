@@ -28,6 +28,7 @@ namespace NeuralChess.Engine
 
             int bestGain = int.MinValue;
 
+            int aiColour = board.ActiveColour;
             int multiplier = board.ActiveColour == Colour.White ? 1 : -1;
 
             foreach (Move move in pseudoLegalMoves)
@@ -35,9 +36,14 @@ namespace NeuralChess.Engine
                 if (move.IsLegal(board))
                 {
                     legalMoves.Add(move);
-                    Board clone = board.CloneBoard();
-                    move.MovePiece(clone);
-                    int moveValue = RecursiveMinMaxed(clone, Depth - 1, board.ActiveColour, multiplier);
+                    move.MovePiece(board);
+                    board.ActiveColour ^= 1;
+
+                    int moveValue = RecursiveMinMaxed(board, Depth - 1, aiColour, multiplier);
+
+                    board.ActiveColour ^= 1;
+                    move.ReverseMove(board);
+
                     if (moveValue > bestGain)
                     {
                         bestMoves = [];
@@ -70,8 +76,6 @@ namespace NeuralChess.Engine
                 return board.GetBoardValue() * multiplier;
             }
 
-            board.ActiveColour ^= 1;
-
             int bestGain = AIColour == board.ActiveColour ? int.MinValue : int.MaxValue;
             List<Move> pseudoLegalMoves = MoveGenerator.GenerateAllMoves(board);
             List<Move> legalMoves = [];
@@ -81,9 +85,15 @@ namespace NeuralChess.Engine
                 if (move.IsLegal(board))
                 {
                     legalMoves.Add(move);
-                    Board clone = board.CloneBoard();
-                    move.MovePiece(clone);
-                    int moveValue = RecursiveMinMaxed(clone, depth - 1, AIColour, multiplier);
+
+                    move.MovePiece(board);
+                    board.ActiveColour ^= 1;
+
+                    int moveValue = RecursiveMinMaxed(board, depth - 1, AIColour, multiplier);
+
+                    board.ActiveColour ^= 1;
+                    move.ReverseMove(board);
+
                     bestGain = board.ActiveColour == AIColour ? Math.Max(moveValue, bestGain) : Math.Min(moveValue, bestGain);
                 }
             }
