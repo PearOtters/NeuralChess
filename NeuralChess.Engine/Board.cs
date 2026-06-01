@@ -52,6 +52,14 @@ namespace NeuralChess.Engine
             {'r', Piece.BlackRook}, {'q', Piece.BlackQueen}, {'k', Piece.BlackKing}
         };
 
+        private static readonly Dictionary<int, int> PieceValue = new()
+        {
+            {Piece.WhitePawn, 1}, {Piece.WhiteKnight, 3}, {Piece.WhiteBishop, 3},
+            {Piece.WhiteRook, 5}, {Piece.WhiteQueen, 9}, {Piece.WhiteKing, 999},
+            {Piece.BlackPawn, -1}, {Piece.BlackKnight, -3}, {Piece.BlackBishop, -3},
+            {Piece.BlackRook, -5}, {Piece.BlackQueen, -9}, {Piece.BlackKing, -999}
+        };
+
         public Board(string starting_pos)
         {
             LoadPositionFromFen(starting_pos);
@@ -250,16 +258,19 @@ namespace NeuralChess.Engine
             return false;
         }
 
-        public int ReturnPieceAt(int pieceIndex)
+        public int GetBoardValue()
         {
+            int totalValue = 0;
             for (int i = 0; i < 12; i++)
             {
-                if ((Pieces[i] & 1UL << pieceIndex) != 0)
+                ulong piece = Pieces[i];
+                while (piece != 0)
                 {
-                    return i;
+                    totalValue += PieceValue[i];
+                    piece &= piece - 1;
                 }
             }
-            return -1;
+            return totalValue;
         }
     }
 }
