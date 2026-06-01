@@ -19,6 +19,9 @@ namespace NeuralChess.Engine
         internal int SelectedPiece;
         internal int FromSquare, ToSquare;
         internal int PromotionPiece = -1;
+        internal int CapturedPiece = -1;
+        internal uint PrevCastleRights = 0;
+        internal int PrevEnPassant = -1;
 
         public Move(int piece, int fromSquare, int toSquare)
         {
@@ -38,11 +41,18 @@ namespace NeuralChess.Engine
 
         public void MovePiece(Board board)
         {
+            PrevCastleRights = board.CastleRights;
+            PrevEnPassant = board.EnPassantSquare;
+
             board.EnPassantSquare = -1;
             ulong clearMask = ~(1UL << ToSquare);
             for (int i = 0; i < 12; i++)
             {
-                board.Pieces[i] &= clearMask;
+                if ((board.Pieces[i] & ~clearMask) != 0)
+                {
+                    board.Pieces[i] &= clearMask;
+                    CapturedPiece = i;
+                }
             }
 
             board.Pieces[SelectedPiece] ^= 1UL << FromSquare;
@@ -58,8 +68,23 @@ namespace NeuralChess.Engine
             if (Special == SpecialMove.EN_PASSANT)
             {
                 int capturedPawnSquare = SelectedPiece == Piece.WhitePawn ? ToSquare - 8 : ToSquare + 8;
-                int capturedPiece = SelectedPiece == Piece.WhitePawn ? Piece.BlackPawn : Piece.WhitePawn;
-                board.Pieces[capturedPiece] &= ~(1UL << capturedPawnSquare);
+                CapturedPiece = SelectedPiece == Piece.WhitePawn ? Piece.BlackPawn : Piece.WhitePawn;
+                board.Pieces[CapturedPiece] &= ~(1UL << capturedPawnSquare);
+            }
+
+            if (Special == SpecialMove.CASTLE)
+            {
+                int rookPiece = SelectedPiece - 2;
+                if (ToSquare > FromSquare)
+                {
+                    board.Pieces[rookPiece] ^= 1UL << (ToSquare + 1);
+                    board.Pieces[rookPiece] |= 1UL << (ToSquare - 1);
+                }
+                else
+                {
+                    board.Pieces[rookPiece] ^= 1UL << (ToSquare - 2);
+                    board.Pieces[rookPiece] |= 1UL << (ToSquare + 1);
+                }
             }
 
             board.Colours[Colour.White] = board.Pieces[Piece.WhitePawn] | board.Pieces[Piece.WhiteKnight] | board.Pieces[Piece.WhiteBishop] |
@@ -67,18 +92,6 @@ namespace NeuralChess.Engine
             board.Colours[Colour.Black] = board.Pieces[Piece.BlackPawn] | board.Pieces[Piece.BlackKnight] | board.Pieces[Piece.BlackBishop] |
                 board.Pieces[Piece.BlackRook] | board.Pieces[Piece.BlackQueen] | board.Pieces[Piece.BlackKing];
             board.AllPieces = board.Colours[Colour.White] | board.Colours[Colour.Black];
-
-            if (Special == SpecialMove.CASTLE)
-            {
-                if (ToSquare > FromSquare)
-                {
-                    new Move(SelectedPiece - 2, ToSquare + 1, ToSquare - 1).MovePiece(board);
-                }
-                else
-                {
-                    new Move(SelectedPiece - 2, ToSquare - 2, ToSquare + 1).MovePiece(board);
-                }
-            }
 
             if (SelectedPiece == Piece.WhiteKing) board.CastleRights &= ~(CastlingRights.WK | CastlingRights.WQ);
             if (SelectedPiece == Piece.BlackKing) board.CastleRights &= ~(CastlingRights.BK | CastlingRights.BQ);
@@ -96,6 +109,57 @@ namespace NeuralChess.Engine
             {
                 board.EnPassantSquare = FromSquare - 8;
             }
+        }
+
+        public void ReverseMove(Board board)
+        {
+            if (CapturedPiece != -1)
+            {
+                if (Special == SpecialMove.EN_PASSANT)
+                {
+                    int capturedPawnSquare = SelectedPiece == Piece.WhitePawn ? ToSquare - 8 : ToSquare + 8;
+                    board.Pieces[CapturedPiece] |= 1UL << capturedPawnSquare;
+                    board.EnPassantSquare = ToSquare;
+                }
+                else
+                {
+                    board.Pieces[CapturedPiece] |= 1UL << ToSquare;
+                }
+            }
+
+            board.Pieces[SelectedPiece] |= 1UL << FromSquare;
+            if (Special == SpecialMove.PROMOTION)
+            {
+                board.Pieces[PromotionPiece] ^= 1UL << ToSquare;
+            }
+            else
+            {
+                board.Pieces[SelectedPiece] ^= 1UL << ToSquare;
+            }
+
+            if (Special == SpecialMove.CASTLE)
+            {
+                int rookPiece = SelectedPiece - 2;
+                if (ToSquare > FromSquare)
+                {
+                    board.Pieces[rookPiece] ^= 1UL << (ToSquare - 1);
+                    board.Pieces[rookPiece] |= 1UL << (ToSquare + 1);
+                }
+                else
+                {
+                    board.Pieces[rookPiece] ^= 1UL << (ToSquare + 1);
+                    board.Pieces[rookPiece] |= 1UL << (ToSquare - 2);
+                }
+            }
+
+            board.Colours[Colour.White] = board.Pieces[Piece.WhitePawn] | board.Pieces[Piece.WhiteKnight] | board.Pieces[Piece.WhiteBishop] |
+                board.Pieces[Piece.WhiteRook] | board.Pieces[Piece.WhiteQueen] | board.Pieces[Piece.WhiteKing];
+            board.Colours[Colour.Black] = board.Pieces[Piece.BlackPawn] | board.Pieces[Piece.BlackKnight] | board.Pieces[Piece.BlackBishop] |
+                board.Pieces[Piece.BlackRook] | board.Pieces[Piece.BlackQueen] | board.Pieces[Piece.BlackKing];
+            board.AllPieces = board.Colours[Colour.White] | board.Colours[Colour.Black];
+
+            board.CastleRights = PrevCastleRights;
+            board.EnPassantSquare = PrevEnPassant;
         }
 
         public string ToUCI()
@@ -150,11 +214,12 @@ namespace NeuralChess.Engine
 
         public bool IsLegal(Board board)
         {
-            Board clone = board.CloneBoard();
-            MovePiece(clone);
-            int kingIndex = BitOperations.TrailingZeroCount(clone.ActiveColour == Colour.White ? clone.Pieces[Piece.WhiteKing] : clone.Pieces[Piece.BlackKing]);
-            int attackingColour = clone.ActiveColour == Colour.White ? Colour.Black : Colour.White;
-            return !Board.IsSquareAttacked(kingIndex, attackingColour, clone);
+            MovePiece(board);
+            int kingIndex = BitOperations.TrailingZeroCount(board.ActiveColour == Colour.White ? board.Pieces[Piece.WhiteKing] : board.Pieces[Piece.BlackKing]);
+            int attackingColour = board.ActiveColour == Colour.White ? Colour.Black : Colour.White;
+            bool squareAttacked = !Board.IsSquareAttacked(kingIndex, attackingColour, board);
+            ReverseMove(board);
+            return squareAttacked;
         }
 
         public int GetValue(Board board)
