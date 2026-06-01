@@ -9,10 +9,10 @@ namespace NeuralChess.Engine
 {
     internal static class Constants
     {
-        public static readonly ulong NotAFile = 0xFEFEFEFEFEFEFEFEUL;
-        public static readonly ulong NotABFile = 0xFCFCFCFCFCFCFCFCUL;
-        public static readonly ulong NotHFile = 0x7F7F7F7F7F7F7F7FUL;
-        public static readonly ulong NotGHFile = 0x3F3F3F3F3F3F3F3FUL;
+        public const ulong NotAFile = 0xFEFEFEFEFEFEFEFEUL;
+        public const ulong NotABFile = 0xFCFCFCFCFCFCFCFCUL;
+        public const ulong NotHFile = 0x7F7F7F7F7F7F7F7FUL;
+        public const ulong NotGHFile = 0x3F3F3F3F3F3F3F3FUL;
 
         public static readonly string regular_start = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
     }
