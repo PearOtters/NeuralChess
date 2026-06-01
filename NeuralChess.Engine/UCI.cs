@@ -5,7 +5,7 @@ namespace NeuralChess.Engine
 {
     public static class UCI
     {
-        public static void Loop()
+        public static void Loop(Engine engine)
         {
             Board board = new(Constants.regular_start);
 
@@ -33,24 +33,7 @@ namespace NeuralChess.Engine
                 }
                 else if (command == "go")
                 {
-                    List<Move> pseudoMoves = MoveGenerator.GenerateAllMoves(board);
-                    List<Move> legalMoves = [];
-
-                    foreach (Move m in pseudoMoves)
-                    {
-                        if (MoveParser.IsLegal(board, m)) legalMoves.Add(m);
-                    }
-
-                    if (legalMoves.Count > 0)
-                    {
-                        Random rng = new Random();
-                        Move bestMove = legalMoves[rng.Next(legalMoves.Count)];
-                        Console.WriteLine($"bestmove {MoveToUCIString(bestMove)}");
-                    }
-                    else
-                    {
-                        Console.WriteLine("bestmove (none)");
-                    }
+                    engine.Play(board);
                 }
                 else if (command == "quit")
                 {
@@ -80,16 +63,11 @@ namespace NeuralChess.Engine
             {
                 for (int i = moveIndex + 1; i < tokens.Length; i++)
                 {
-                    Move move = Move.getMoveFromUCI(board, tokens[i]);
+                    Move move = Move.GetMoveFromUCI(board, tokens[i]);
                     move.MovePiece(board);
                     board.ActiveColour ^= 1;
                 }
             }
-        }
-
-        private static string MoveToUCIString(Move move)
-        { 
-            return move.ToUCI();
         }
     }
 }
