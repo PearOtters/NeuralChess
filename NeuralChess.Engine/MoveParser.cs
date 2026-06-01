@@ -42,7 +42,7 @@ namespace NeuralChess.Engine
             Move? validMove = moves.FirstOrDefault(m => m.ToSquare == toSquare && m.FromSquare == fromSquare && m.PromotionPiece == promotionPiece);
 
             if (validMove == null) return false;
-            if (!IsLegal(board, validMove)) return false;
+            if (!validMove.IsLegal(board)) return false;
 
             validMove.MovePiece(board);
             board.ActiveColour = board.ActiveColour == Colour.White ? Colour.Black : Colour.White;
@@ -50,13 +50,6 @@ namespace NeuralChess.Engine
             return true;
         }
 
-        public static bool IsLegal(Board board, Move validMove)
-        {
-            Board clone = board.CloneBoard();
-            validMove.MovePiece(clone);
-            int kingIndex = BitOperations.TrailingZeroCount(clone.ActiveColour == Colour.White ? clone.Pieces[Piece.WhiteKing] : clone.Pieces[Piece.BlackKing]);
-            int attackingColour = clone.ActiveColour == Colour.White ? Colour.Black : Colour.White;
-            return !Board.IsSquareAttacked(kingIndex, attackingColour, clone);
-        }
+        
     }
 }

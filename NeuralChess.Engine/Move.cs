@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Numerics;
 using System.Text;
 
 namespace NeuralChess.Engine
@@ -118,7 +119,7 @@ namespace NeuralChess.Engine
             return uci;
         }
 
-        public static Move getMoveFromUCI(Board board, string uciString)
+        public static Move GetMoveFromUCI(Board board, string uciString)
         {
             char fromFile = uciString[0];
             char fromRank = uciString[1];
@@ -145,6 +146,22 @@ namespace NeuralChess.Engine
                 m.FromSquare == fromSquare &&
                 m.ToSquare == toSquare &&
                 m.PromotionPiece == promotionPiece);
+        }
+
+        public bool IsLegal(Board board)
+        {
+            Board clone = board.CloneBoard();
+            MovePiece(clone);
+            int kingIndex = BitOperations.TrailingZeroCount(clone.ActiveColour == Colour.White ? clone.Pieces[Piece.WhiteKing] : clone.Pieces[Piece.BlackKing]);
+            int attackingColour = clone.ActiveColour == Colour.White ? Colour.Black : Colour.White;
+            return !Board.IsSquareAttacked(kingIndex, attackingColour, clone);
+        }
+
+        public int GetValue(Board board)
+        {
+            Board clone = board.CloneBoard();
+            MovePiece(clone);
+            return clone.GetBoardValue() - board.GetBoardValue();
         }
     }
 }
