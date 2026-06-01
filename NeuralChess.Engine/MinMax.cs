@@ -8,6 +8,7 @@ namespace NeuralChess.Engine
     public class MinMax : Engine
     {
         private readonly int Depth = 5;
+        private const int CheckmateScore = 1000000;
 
         public MinMax(int depth) : base("MinMax")
         {
@@ -89,13 +90,12 @@ namespace NeuralChess.Engine
 
             if (legalMoves.Count == 0)
             {
-                if (Board.IsSquareAttacked(BitOperations.TrailingZeroCount(board.Pieces[Piece.WhiteKing + board.ActiveColour * 6]), board.ActiveColour ^ 1, board))
+                int kingSquare = BitOperations.TrailingZeroCount(board.Pieces[Piece.WhiteKing + board.ActiveColour * 6]);
+                bool inCheck = Board.IsSquareAttacked(kingSquare, board.ActiveColour ^ 1, board);
+
+                if (inCheck)
                 {
-                    return -999;
-                }
-                else if (Board.IsSquareAttacked(BitOperations.TrailingZeroCount(board.Pieces[Piece.WhiteKing + (board.ActiveColour ^ 1) * 6]), board.ActiveColour, board))
-                {
-                    return 999;
+                    return board.ActiveColour == AIColour ? -CheckmateScore - depth : CheckmateScore + depth;
                 }
                 else
                 {

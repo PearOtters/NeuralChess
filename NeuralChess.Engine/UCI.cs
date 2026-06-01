@@ -37,7 +37,7 @@ namespace NeuralChess.Engine
                 }
                 else if (command == "quit")
                 {
-                    
+                    System.Environment.Exit(1);
                 }
             }
         }
