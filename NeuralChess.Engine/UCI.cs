@@ -19,7 +19,7 @@ namespace NeuralChess.Engine
 
                 if (command == "uci")
                 {
-                    Console.WriteLine("id name NeuralChess");
+                    Console.WriteLine($"id name {engine.Name}");
                     Console.WriteLine("id author Pierre Outters");
                     Console.WriteLine("uciok");
                 }
@@ -37,7 +37,7 @@ namespace NeuralChess.Engine
                 }
                 else if (command == "quit")
                 {
-                    break;
+                    
                 }
             }
         }

@@ -6,6 +6,11 @@ namespace NeuralChess.Engine
 {
     public class RandomMove : Engine
     {
+        public RandomMove() : base("Random")
+        {
+
+        }
+
         public override void Play(Board board)
         {
             List<Move> pseudoMoves = MoveGenerator.GenerateAllMoves(board);

@@ -6,6 +6,13 @@ namespace NeuralChess.Engine
 {
     public abstract class Engine
     {
+        public readonly string Name;
+
+        public Engine(string name)
+        {
+            Name = name;
+        }
+
         public abstract void Play(Board board);
     }
 }
