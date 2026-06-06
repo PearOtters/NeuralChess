@@ -52,13 +52,10 @@ namespace NeuralChess.Engine
             {'r', Piece.BlackRook}, {'q', Piece.BlackQueen}, {'k', Piece.BlackKing}
         };
 
-        private static readonly Dictionary<int, int> PieceValue = new()
-        {
-            {Piece.WhitePawn, 1}, {Piece.WhiteKnight, 3}, {Piece.WhiteBishop, 3},
-            {Piece.WhiteRook, 5}, {Piece.WhiteQueen, 9}, {Piece.WhiteKing, 999},
-            {Piece.BlackPawn, -1}, {Piece.BlackKnight, -3}, {Piece.BlackBishop, -3},
-            {Piece.BlackRook, -5}, {Piece.BlackQueen, -9}, {Piece.BlackKing, -999}
-        };
+        private static readonly int[] PieceValue =
+        [
+            100, 300, 300, 500, 900, 10000, -100, -300, -300, -500, -900, -10000
+        ];
 
         public Board(string starting_pos)
         {
