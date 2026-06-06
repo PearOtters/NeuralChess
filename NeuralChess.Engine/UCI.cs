@@ -34,16 +34,25 @@ namespace NeuralChess.Engine
                 }
                 else if (command == "go")
                 {
-                    int maximumTime = int.MaxValue;
-                    if (tokens[1] == "movetime")
+                    int maximumTime = -1;
+                    int maxTimeIndex = Array.IndexOf(tokens, "movetime");
+
+                    int maximumDepth = -1;
+                    int maxDepthIndex = Array.IndexOf(tokens, "depth");
+
+                    if (maxTimeIndex != -1)
                     {
-                        maximumTime = int.Parse(tokens[2]);
+                        maximumTime = int.Parse(tokens[maxTimeIndex + 1]);
+                    }
+                    if (maxDepthIndex != -1)
+                    {
+                        maximumDepth = int.Parse(tokens[maxDepthIndex + 1]);
                     }
                     if (toLog)
                     {
                         File.AppendAllText("log.txt", input + "\n");
                     }
-                    engine.Play(board, maximumTime);
+                    engine.Play(board, maximumTime, maximumDepth);
                 }
                 else if (command == "quit")
                 {
@@ -52,7 +61,7 @@ namespace NeuralChess.Engine
             }
         }
 
-        internal static void ParsePosition(ref Board board, string[] tokens)
+        private static void ParsePosition(ref Board board, string[] tokens)
         {
             int moveIndex = -1;
 
