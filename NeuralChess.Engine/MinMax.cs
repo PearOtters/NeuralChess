@@ -9,12 +9,14 @@ namespace NeuralChess.Engine
 {
     public class MinMax : Engine
     {
-        private readonly int Depth = 5;
+        private readonly int MaxDepth;
         private const int CheckmateScore = 1000000;
+        private readonly bool UseAlphaBeta;
 
-        public MinMax(int depth) : base("MinMax")
+        public MinMax(int maxDepth, bool useAlphaBeta = false) : base(useAlphaBeta ? "AlphaBeta" : "MinMax")
         {
-            Depth = depth;
+            MaxDepth = maxDepth;
+            UseAlphaBeta = useAlphaBeta;
         }
 
         public MinMax() : base("MinMax")
@@ -52,10 +54,13 @@ namespace NeuralChess.Engine
             bool abortSearch = false;
             int completedDepth = 0;
 
-            for (int depth = 1; depth <= Depth; depth++)
+            for (int depth = 1; depth <= MaxDepth; depth++)
             {
                 List<Move> depthBestMoves = [];
                 int bestGain = int.MinValue;
+
+                int alpha = int.MinValue;
+                int beta = int.MaxValue;
 
                 foreach (Move move in rootLegalMoves)
                 {
@@ -68,7 +73,7 @@ namespace NeuralChess.Engine
                     move.MovePiece(board);
                     board.ActiveColour ^= 1;
 
-                    int moveValue = RecursiveMinMaxed(board, depth - 1, aiColour, multiplier);
+                    int moveValue = RecursiveMinMaxed(board, depth - 1, aiColour, multiplier, alpha, beta);
 
                     board.ActiveColour ^= 1;
                     move.ReverseMove(board);
@@ -83,6 +88,8 @@ namespace NeuralChess.Engine
                     {
                         depthBestMoves.Add(move);
                     }
+
+                    alpha = Math.Max(alpha, bestGain);
                 }
 
                 if (abortSearch)
@@ -104,13 +111,14 @@ namespace NeuralChess.Engine
             File.AppendAllText("log.txt", $"depth completed: {completedDepth}\n");
         }
 
-        private static int RecursiveMinMaxed(Board board, int depth, int aiColour, int multiplier)
+        private int RecursiveMinMaxed(Board board, int depth, int aiColour, int multiplier, int alpha, int beta)
         {
             if (depth == 0)
             {
                 return board.GetBoardValue() * multiplier;
             }
 
+            bool isMaximising = (aiColour == board.ActiveColour);
             int bestGain = aiColour == board.ActiveColour ? int.MinValue : int.MaxValue;
 
             List<Move> pseudoLegalMoves = MoveGenerator.GenerateAllMoves(board);
@@ -125,12 +133,26 @@ namespace NeuralChess.Engine
                     move.MovePiece(board);
                     board.ActiveColour ^= 1;
 
-                    int moveValue = RecursiveMinMaxed(board, depth - 1, aiColour, multiplier);
+                    int moveValue = RecursiveMinMaxed(board, depth - 1, aiColour, multiplier, alpha, beta);
 
                     board.ActiveColour ^= 1;
                     move.ReverseMove(board);
 
-                    bestGain = board.ActiveColour == aiColour ? Math.Max(moveValue, bestGain) : Math.Min(moveValue, bestGain);
+                    if (isMaximising)
+                    {
+                        bestGain = Math.Max(moveValue, bestGain);
+                        if (UseAlphaBeta) alpha = Math.Max(alpha, bestGain);
+                    }
+                    else
+                    {
+                        bestGain = Math.Min(moveValue, bestGain);
+                        if (UseAlphaBeta) beta = Math.Min(beta, bestGain);
+                    }
+
+                    if (UseAlphaBeta && beta <= alpha)
+                    {
+                        break;
+                    }
                 }
             }
 

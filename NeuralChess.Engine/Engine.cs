@@ -4,14 +4,9 @@ using System.Text;
 
 namespace NeuralChess.Engine
 {
-    public abstract class Engine
+    public abstract class Engine(string name)
     {
-        public readonly string Name;
-
-        public Engine(string name)
-        {
-            Name = name;
-        }
+        public readonly string Name = name;
 
         public abstract void Play(Board board, int maximumTime);
     }
