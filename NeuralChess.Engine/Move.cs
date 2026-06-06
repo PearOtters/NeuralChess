@@ -22,6 +22,7 @@ namespace NeuralChess.Engine
         internal int CapturedPiece = -1;
         internal uint PrevCastleRights = 0;
         internal int PrevEnPassant = -1;
+        internal int Score = 0;
 
         public Move(int piece, int fromSquare, int toSquare)
         {

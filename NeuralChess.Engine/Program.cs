@@ -2,10 +2,10 @@
 {
     public class Program
     {
-        static void Main(string[] args)
+        static void Main()
         {
-            Engine engine = new MinMax(20);
-            UCI.Loop(engine, true);
+            Engine engine = new MinMax(5);
+            UCI.Loop(engine, false);
         }
     }
 }

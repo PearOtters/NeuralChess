@@ -8,6 +8,6 @@ namespace NeuralChess.Engine
     {
         public readonly string Name = name;
 
-        public abstract void Play(Board board, int maximumTime);
+        public abstract void Play(Board board, int maximumTime, int maximumDepth);
     }
 }

@@ -7,28 +7,29 @@ using System.IO;
 
 namespace NeuralChess.Engine
 {
-    public class MinMax : Engine
+    public class MinMax(int MaxDepth, bool UseAlphaBeta = false) : Engine(UseAlphaBeta ? $"AlphaBeta {MaxDepth}" : $"MinMax {MaxDepth}")
     {
-        private readonly int MaxDepth;
         private const int CheckmateScore = 1000000;
-        private readonly bool UseAlphaBeta;
+        private static readonly int[] MVV_LVA_Values =
+        [
+            100, 300, 300, 500, 900, 10000,
+            100, 300, 300, 500, 900, 10000
+        ];
 
-        public MinMax(int maxDepth, bool useAlphaBeta = false) : base(useAlphaBeta ? "AlphaBeta" : "MinMax")
-        {
-            MaxDepth = maxDepth;
-            UseAlphaBeta = useAlphaBeta;
-        }
-
-        public MinMax() : base("MinMax")
-        {
-
-        }
-
-        public override void Play(Board board, int maximumTime)
+        public override void Play(Board board, int maximumTime, int maximumDepth)
         {
             Stopwatch searchTimer = Stopwatch.StartNew();
 
             List<Move> pseudoLegalMoves = MoveGenerator.GenerateAllMoves(board);
+            if (UseAlphaBeta) OrderMoves(pseudoLegalMoves, board);
+
+            int toDepth = int.MaxValue;
+            if (maximumTime == -1)
+            {
+                toDepth = maximumDepth != -1 ? maximumDepth : MaxDepth;
+                maximumTime = int.MaxValue;
+            }
+
             List<Move> rootLegalMoves = [];
             foreach (Move move in pseudoLegalMoves)
             {
@@ -40,13 +41,8 @@ namespace NeuralChess.Engine
                 Console.WriteLine("bestmove (none)");
                 return;
             }
-            else if (rootLegalMoves.Count == 1)
-            {
-                Console.WriteLine(rootLegalMoves[0].ToUCI());
-                return;
-            }
 
-            List<Move> currentBestMoves = [rootLegalMoves[0]];
+            Move currentBestMove = rootLegalMoves[0];
 
             int aiColour = board.ActiveColour;
             int multiplier = board.ActiveColour == Colour.White ? 1 : -1;
@@ -54,13 +50,19 @@ namespace NeuralChess.Engine
             bool abortSearch = false;
             int completedDepth = 0;
 
-            for (int depth = 1; depth <= MaxDepth; depth++)
+            for (int depth = 1; depth <= toDepth; depth++)
             {
-                List<Move> depthBestMoves = [];
+                Move? depthBestMove = null;
                 int bestGain = int.MinValue;
 
                 int alpha = int.MinValue;
                 int beta = int.MaxValue;
+
+                if (depth > 1 && currentBestMove != null)
+                {
+                    rootLegalMoves.Remove(currentBestMove);
+                    rootLegalMoves.Insert(0, currentBestMove);
+                }
 
                 foreach (Move move in rootLegalMoves)
                 {
@@ -80,13 +82,8 @@ namespace NeuralChess.Engine
 
                     if (moveValue > bestGain)
                     {
-                        depthBestMoves.Clear();
-                        depthBestMoves.Add(move);
+                        depthBestMove = move;
                         bestGain = moveValue;
-                    }
-                    else if (moveValue == bestGain)
-                    {
-                        depthBestMoves.Add(move);
                     }
 
                     alpha = Math.Max(alpha, bestGain);
@@ -97,18 +94,17 @@ namespace NeuralChess.Engine
                     break;
                 }
 
-                currentBestMoves.Clear();
-                currentBestMoves.AddRange(depthBestMoves);
-                completedDepth = depth;
+                if (depthBestMove != null)
+                {
+                    currentBestMove = depthBestMove;
+                    completedDepth = depth;
+                }
             }
-
-            Random rng = new();
-            Move bestMove = currentBestMoves[rng.Next(currentBestMoves.Count)];
-            Console.WriteLine($"bestmove {bestMove.ToUCI()}");
+            Console.WriteLine($"bestmove {currentBestMove.ToUCI()}");
 
             double timeTaken = searchTimer.ElapsedMilliseconds / 1000d;
-            File.AppendAllText("log.txt", $"time taken: {timeTaken}\n");
-            File.AppendAllText("log.txt", $"depth completed: {completedDepth}\n");
+            //File.AppendAllText("log.txt", $"time taken: {timeTaken}\n");
+            //File.AppendAllText("log.txt", $"depth completed: {completedDepth}\n\n");
         }
 
         private int RecursiveMinMaxed(Board board, int depth, int aiColour, int multiplier, int alpha, int beta)
@@ -122,6 +118,9 @@ namespace NeuralChess.Engine
             int bestGain = aiColour == board.ActiveColour ? int.MinValue : int.MaxValue;
 
             List<Move> pseudoLegalMoves = MoveGenerator.GenerateAllMoves(board);
+
+            if (UseAlphaBeta) OrderMoves(pseudoLegalMoves, board);
+
             List<Move> legalMoves = [];
 
             foreach (Move move in pseudoLegalMoves)
@@ -172,6 +171,40 @@ namespace NeuralChess.Engine
             }
 
             return bestGain;
+        }
+
+        private static void OrderMoves(List<Move> moves, Board board)
+        {
+            foreach (Move move in moves)
+            {
+                move.Score = 0;
+                ulong toSquareMask = 1UL << move.ToSquare;
+
+                if ((board.AllPieces & toSquareMask) != 0)
+                {
+                    int victimType = -1;
+                    for (int i = 0; i < 12; i++)
+                    {
+                        if ((board.Pieces[i] & toSquareMask) != 0)
+                        {
+                            victimType = i;
+                            break;
+                        }
+                    }
+
+                    if (victimType != -1)
+                    {
+                        move.Score = 10 * MVV_LVA_Values[victimType] - MVV_LVA_Values[move.SelectedPiece];
+                    }
+                }
+
+                if (move.Special == SpecialMove.PROMOTION)
+                {
+                    move.Score += 9000;
+                }
+            }
+
+            moves.Sort((m1, m2) => m2.Score.CompareTo(m1.Score));
         }
     }
 }

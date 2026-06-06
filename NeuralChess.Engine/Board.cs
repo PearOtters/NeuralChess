@@ -54,7 +54,8 @@ namespace NeuralChess.Engine
 
         private static readonly int[] PieceValue =
         [
-            100, 300, 300, 500, 900, 10000, -100, -300, -300, -500, -900, -10000
+            100, 300, 300, 500, 900, 10000,
+            -100, -300, -300, -500, -900, -10000
         ];
 
         public Board(string starting_pos)
