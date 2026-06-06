@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Numerics;
 using System.Text;
+using System.IO;
 
 namespace NeuralChess.Engine
 {
@@ -20,63 +22,97 @@ namespace NeuralChess.Engine
 
         }
 
-        public override void Play(Board board)
+        public override void Play(Board board, int maximumTime)
         {
-            List<Move> pseudoLegalMoves = MoveGenerator.GenerateAllMoves(board);
-            List<Move> legalMoves = [];
-            List<Move> bestMoves = [];
+            Stopwatch searchTimer = Stopwatch.StartNew();
 
-            int bestGain = int.MinValue;
+            List<Move> pseudoLegalMoves = MoveGenerator.GenerateAllMoves(board);
+            List<Move> rootLegalMoves = [];
+            foreach (Move move in pseudoLegalMoves)
+            {
+                if (move.IsLegal(board)) rootLegalMoves.Add(move);
+            }
+
+            if (rootLegalMoves.Count == 0)
+            {
+                Console.WriteLine("bestmove (none)");
+                return;
+            }
+            else if (rootLegalMoves.Count == 1)
+            {
+                Console.WriteLine(rootLegalMoves[0].ToUCI());
+                return;
+            }
+
+            List<Move> currentBestMoves = [rootLegalMoves[0]];
 
             int aiColour = board.ActiveColour;
             int multiplier = board.ActiveColour == Colour.White ? 1 : -1;
 
-            foreach (Move move in pseudoLegalMoves)
+            bool abortSearch = false;
+            int completedDepth = 0;
+
+            for (int depth = 1; depth <= Depth; depth++)
             {
-                if (move.IsLegal(board))
+                List<Move> depthBestMoves = [];
+                int bestGain = int.MinValue;
+
+                foreach (Move move in rootLegalMoves)
                 {
-                    legalMoves.Add(move);
+                    if (searchTimer.ElapsedMilliseconds > maximumTime)
+                    {
+                        abortSearch = true;
+                        break;
+                    }
+
                     move.MovePiece(board);
                     board.ActiveColour ^= 1;
 
-                    int moveValue = RecursiveMinMaxed(board, Depth - 1, aiColour, multiplier);
+                    int moveValue = RecursiveMinMaxed(board, depth - 1, aiColour, multiplier);
 
                     board.ActiveColour ^= 1;
                     move.ReverseMove(board);
 
                     if (moveValue > bestGain)
                     {
-                        bestMoves = [];
-                        bestMoves.Add(move);
+                        depthBestMoves.Clear();
+                        depthBestMoves.Add(move);
                         bestGain = moveValue;
                     }
                     else if (moveValue == bestGain)
                     {
-                        bestMoves.Add(move);
+                        depthBestMoves.Add(move);
                     }
                 }
+
+                if (abortSearch)
+                {
+                    break;
+                }
+
+                currentBestMoves.Clear();
+                currentBestMoves.AddRange(depthBestMoves);
+                completedDepth = depth;
             }
-            Console.WriteLine(legalMoves.Count);
-            if (legalMoves.Count > 0)
-            {
-                Random rng = new();
-                Move bestMove = bestMoves[rng.Next(bestMoves.Count)];
-                Console.WriteLine($"bestmove {bestMove.ToUCI()}");
-            }
-            else
-            {
-                Console.WriteLine("bestmove (none)");
-            }
+
+            Random rng = new();
+            Move bestMove = currentBestMoves[rng.Next(currentBestMoves.Count)];
+            Console.WriteLine($"bestmove {bestMove.ToUCI()}");
+
+            double timeTaken = searchTimer.ElapsedMilliseconds / 1000d;
+            File.AppendAllText("log.txt", $"time taken: {timeTaken}\n");
+            File.AppendAllText("log.txt", $"depth completed: {completedDepth}\n");
         }
 
-        private static int RecursiveMinMaxed(Board board, int depth, int AIColour, int multiplier)
+        private static int RecursiveMinMaxed(Board board, int depth, int aiColour, int multiplier)
         {
             if (depth == 0)
             {
                 return board.GetBoardValue() * multiplier;
             }
 
-            int bestGain = AIColour == board.ActiveColour ? int.MinValue : int.MaxValue;
+            int bestGain = aiColour == board.ActiveColour ? int.MinValue : int.MaxValue;
+
             List<Move> pseudoLegalMoves = MoveGenerator.GenerateAllMoves(board);
             List<Move> legalMoves = [];
 
@@ -89,12 +125,12 @@ namespace NeuralChess.Engine
                     move.MovePiece(board);
                     board.ActiveColour ^= 1;
 
-                    int moveValue = RecursiveMinMaxed(board, depth - 1, AIColour, multiplier);
+                    int moveValue = RecursiveMinMaxed(board, depth - 1, aiColour, multiplier);
 
                     board.ActiveColour ^= 1;
                     move.ReverseMove(board);
 
-                    bestGain = board.ActiveColour == AIColour ? Math.Max(moveValue, bestGain) : Math.Min(moveValue, bestGain);
+                    bestGain = board.ActiveColour == aiColour ? Math.Max(moveValue, bestGain) : Math.Min(moveValue, bestGain);
                 }
             }
 
@@ -105,7 +141,7 @@ namespace NeuralChess.Engine
 
                 if (inCheck)
                 {
-                    return board.ActiveColour == AIColour ? -CheckmateScore - depth : CheckmateScore + depth;
+                    return board.ActiveColour == aiColour ? -CheckmateScore - depth : CheckmateScore + depth;
                 }
                 else
                 {

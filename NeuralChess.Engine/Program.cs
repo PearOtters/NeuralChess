@@ -4,8 +4,8 @@
     {
         static void Main(string[] args)
         {
-            Engine engine = new MinMax(5);
-            UCI.Loop(engine);
+            Engine engine = new MinMax(20);
+            UCI.Loop(engine, true);
         }
     }
 }

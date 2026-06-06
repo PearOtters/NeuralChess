@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 
 namespace NeuralChess.Engine
 {
     public static class UCI
     {
-        public static void Loop(Engine engine)
+        public static void Loop(Engine engine, bool toLog)
         {
             Board board = new(Constants.regular_start);
 
@@ -33,7 +34,16 @@ namespace NeuralChess.Engine
                 }
                 else if (command == "go")
                 {
-                    engine.Play(board);
+                    int maximumTime = int.MaxValue;
+                    if (tokens[1] == "movetime")
+                    {
+                        maximumTime = int.Parse(tokens[2]);
+                    }
+                    if (toLog)
+                    {
+                        File.AppendAllText("log.txt", input + "\n");
+                    }
+                    engine.Play(board, maximumTime);
                 }
                 else if (command == "quit")
                 {

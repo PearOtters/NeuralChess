@@ -13,6 +13,6 @@ namespace NeuralChess.Engine
             Name = name;
         }
 
-        public abstract void Play(Board board);
+        public abstract void Play(Board board, int maximumTime);
     }
 }

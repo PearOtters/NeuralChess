@@ -11,7 +11,7 @@ namespace NeuralChess.Engine
 
         }
 
-        public override void Play(Board board)
+        public override void Play(Board board, int maximumTime)
         {
             List<Move> pseudoMoves = MoveGenerator.GenerateAllMoves(board);
             List<Move> legalMoves = [];
