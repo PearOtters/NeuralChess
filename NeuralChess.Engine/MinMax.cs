@@ -111,7 +111,7 @@ namespace NeuralChess.Engine
         {
             if (depth == 0)
             {
-                return board.GetBoardValue() * multiplier;
+                return QuiescenceSearch(board, aiColour, multiplier, alpha, beta);
             }
 
             bool isMaximising = (aiColour == board.ActiveColour);
@@ -205,6 +205,64 @@ namespace NeuralChess.Engine
             }
 
             moves.Sort((m1, m2) => m2.Score.CompareTo(m1.Score));
+        }
+
+        private int QuiescenceSearch(Board board, int aiColour, int multiplier, int alpha, int beta)
+        {
+            int standPat = board.GetBoardValue() * multiplier;
+            bool isMaximising = (aiColour == board.ActiveColour);
+
+            if (UseAlphaBeta)
+            {
+                if (isMaximising)
+                {
+                    if (standPat >= beta) return beta;
+                    if (standPat > alpha) alpha = standPat;
+                }
+                else
+                {
+                    if (standPat <= alpha) return alpha;
+                    if (standPat < beta) beta = standPat;
+                }
+            }
+
+            int bestGain = standPat;
+
+            List<Move> captures = MoveGenerator.GenerateAllCaptures(board);
+
+            if (UseAlphaBeta) OrderMoves(captures, board);
+
+            foreach (Move move in captures)
+            {
+                if (move.IsLegal(board))
+                {
+                    move.MovePiece(board);
+                    board.ActiveColour ^= 1;
+
+                    int moveValue = QuiescenceSearch(board, aiColour, multiplier, alpha, beta);
+
+                    board.ActiveColour ^= 1;
+                    move.ReverseMove(board);
+
+                    if (isMaximising)
+                    {
+                        bestGain = Math.Max(moveValue, bestGain);
+                        if (UseAlphaBeta) alpha = Math.Max(alpha, bestGain);
+                    }
+                    else
+                    {
+                        bestGain = Math.Min(moveValue, bestGain);
+                        if (UseAlphaBeta) beta = Math.Min(beta, bestGain);
+                    }
+
+                    if (UseAlphaBeta && beta <= alpha)
+                    {
+                        break;
+                    }
+                }
+            }
+
+            return bestGain;
         }
     }
 }
