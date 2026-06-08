@@ -5,7 +5,7 @@ using System.Text;
 
 namespace NeuralChess.Engine
 {
-    internal static class Piece
+    public static class Piece
     {
         public const int WhitePawn = 0;
         public const int WhiteKnight = 1;
@@ -22,13 +22,13 @@ namespace NeuralChess.Engine
         public const int BlackKing = 11;
     }
 
-    internal static class Colour
+    public static class Colour
     {
         public const int White = 0;
         public const int Black = 1;     
     }
 
-    internal static class CastlingRights
+    public static class CastlingRights
     {
         public const uint WK = 1;
         public const uint WQ = 2;
@@ -223,16 +223,16 @@ namespace NeuralChess.Engine
             };
         }
 
-        public static bool IsSquareAttacked(int squareIndex, int attackingColour, Board board)
+        public bool IsSquareAttacked(int squareIndex, int attackingColour)
         {
             ulong attackSquare = 1UL << squareIndex;
-            ulong attackPawn = board.Pieces[Piece.WhitePawn + attackingColour * 6];
-            ulong attackKnight = board.Pieces[Piece.WhiteKnight + attackingColour * 6];
-            ulong attackBishop = board.Pieces[Piece.WhiteBishop + attackingColour * 6];
-            ulong attackRook = board.Pieces[Piece.WhiteRook + attackingColour * 6];
-            ulong attackQueen = board.Pieces[Piece.WhiteQueen + attackingColour * 6];
-            ulong attackKing = board.Pieces[Piece.WhiteKing + attackingColour * 6];
-            ulong notPiece = ~board.AllPieces;
+            ulong attackPawn = Pieces[Piece.WhitePawn + attackingColour * 6];
+            ulong attackKnight = Pieces[Piece.WhiteKnight + attackingColour * 6];
+            ulong attackBishop = Pieces[Piece.WhiteBishop + attackingColour * 6];
+            ulong attackRook = Pieces[Piece.WhiteRook + attackingColour * 6];
+            ulong attackQueen = Pieces[Piece.WhiteQueen + attackingColour * 6];
+            ulong attackKing = Pieces[Piece.WhiteKing + attackingColour * 6];
+            ulong notPiece = ~AllPieces;
 
             ulong attackStraight = attackQueen | attackRook;
             ulong attackDiagonal = attackQueen | attackBishop;
@@ -355,6 +355,13 @@ namespace NeuralChess.Engine
                 }
             }
             return totalValue;
+        }
+
+        public bool IsCalm()
+        {
+            int kingSquare = BitOperations.TrailingZeroCount(Pieces[Piece.WhiteKing + ActiveColour * 6]);
+            if (IsSquareAttacked(kingSquare, ActiveColour ^ 1)) return false;
+            return MoveGenerator.GenerateAllCaptures(this).Count == 0;
         }
     }
 }
