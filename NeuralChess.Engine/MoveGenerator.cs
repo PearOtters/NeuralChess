@@ -7,7 +7,7 @@ using System.Text;
 
 namespace NeuralChess.Engine
 {
-    internal static class Constants
+    public static class Constants
     {
         public const ulong NotAFile = 0xFEFEFEFEFEFEFEFEUL;
         public const ulong NotABFile = 0xFCFCFCFCFCFCFCFCUL;
@@ -529,12 +529,12 @@ namespace NeuralChess.Engine
             ulong king = board.Pieces[5 + colour * 6];
             int attackColour = Colour.White == colour ? Colour.Black : Colour.White;
 
-            if (Board.IsSquareAttacked(BitOperations.TrailingZeroCount(king), attackColour, board)) return;
+            if (board.IsSquareAttacked(BitOperations.TrailingZeroCount(king), attackColour)) return;
             while (transitPath != 0)
             {
                 int pathSquare = BitOperations.TrailingZeroCount(transitPath);
                 transitPath &= (transitPath - 1);
-                if (Board.IsSquareAttacked(pathSquare, attackColour, board)) return;
+                if (board.IsSquareAttacked(pathSquare, attackColour)) return;
                 if (((1UL << pathSquare) & board.AllPieces) != 0) return;
             }
             int piece = colour == Colour.White ? Piece.WhiteKing : Piece.BlackKing;

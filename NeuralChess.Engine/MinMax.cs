@@ -161,7 +161,7 @@ namespace NeuralChess.Engine
             if (legalMoves.Count == 0)
             {
                 int kingSquare = BitOperations.TrailingZeroCount(board.Pieces[Piece.WhiteKing + board.ActiveColour * 6]);
-                bool inCheck = Board.IsSquareAttacked(kingSquare, board.ActiveColour ^ 1, board);
+                bool inCheck = board.IsSquareAttacked(kingSquare, board.ActiveColour ^ 1);
 
                 if (inCheck)
                 {

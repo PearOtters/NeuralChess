@@ -217,7 +217,7 @@ namespace NeuralChess.Engine
             MovePiece(board);
             int kingIndex = BitOperations.TrailingZeroCount(board.ActiveColour == Colour.White ? board.Pieces[Piece.WhiteKing] : board.Pieces[Piece.BlackKing]);
             int attackingColour = board.ActiveColour == Colour.White ? Colour.Black : Colour.White;
-            bool squareAttacked = !Board.IsSquareAttacked(kingIndex, attackingColour, board);
+            bool squareAttacked = !board.IsSquareAttacked(kingIndex, attackingColour);
             ReverseMove(board);
             return squareAttacked;
         }
