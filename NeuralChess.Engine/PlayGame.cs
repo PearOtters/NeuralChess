@@ -7,12 +7,10 @@ namespace NeuralChess.Engine
 {
     public class PlayGame
     {
-        private static int Winner = -1;
-
         public static void StartGame(string starting_pos)
         {
             Board board = new(starting_pos);
-            while (Winner == -1)
+            while (true)
             {
                 bool validMove = false;
                 string currentCol = board.ActiveColour == Colour.White ? "White" : "Black";
