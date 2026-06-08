@@ -363,5 +363,84 @@ namespace NeuralChess.Engine
             if (IsSquareAttacked(kingSquare, ActiveColour ^ 1)) return false;
             return MoveGenerator.GenerateAllCaptures(this).Count == 0;
         }
+
+        public string ToFEN()
+        {
+            StringBuilder fen = new StringBuilder();
+
+            char[] pieceChars = { 'P', 'N', 'B', 'R', 'Q', 'K', 'p', 'n', 'b', 'r', 'q', 'k' };
+
+            for (int rank = 7; rank >= 0; rank--)
+            {
+                int emptySquares = 0;
+                for (int file = 0; file < 8; file++)
+                {
+                    int squareIndex = (rank * 8) + file;
+                    ulong squareMask = 1UL << squareIndex;
+
+                    if ((AllPieces & squareMask) != 0)
+                    {
+                        if (emptySquares > 0)
+                        {
+                            fen.Append(emptySquares);
+                            emptySquares = 0;
+                        }
+
+                        for (int i = 0; i < 12; i++)
+                        {
+                            if ((Pieces[i] & squareMask) != 0)
+                            {
+                                fen.Append(pieceChars[i]);
+                                break;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        emptySquares++;
+                    }
+                }
+
+                if (emptySquares > 0)
+                {
+                    fen.Append(emptySquares);
+                }
+
+                if (rank > 0)
+                {
+                    fen.Append('/');
+                }
+            }
+
+            fen.Append(ActiveColour == Colour.White ? " w " : " b ");
+
+            if (CastleRights == 0)
+            {
+                fen.Append('-');
+            }
+            else
+            {
+                if ((CastleRights & CastlingRights.WK) != 0) fen.Append('K');
+                if ((CastleRights & CastlingRights.WQ) != 0) fen.Append('Q');
+                if ((CastleRights & CastlingRights.BK) != 0) fen.Append('k');
+                if ((CastleRights & CastlingRights.BQ) != 0) fen.Append('q');
+            }
+
+            fen.Append(' ');
+            if (EnPassantSquare == -1)
+            {
+                fen.Append('-');
+            }
+            else
+            {
+                char fileChar = (char)('a' + (EnPassantSquare % 8));
+                char rankChar = (char)('1' + (EnPassantSquare / 8));
+                fen.Append(fileChar).Append(rankChar);
+            }
+
+            fen.Append(" 0 1");
+
+            return fen.ToString();
+        }
     }
 }
