@@ -104,7 +104,10 @@ namespace NeuralChess.Engine
 
             double timeTaken = searchTimer.ElapsedMilliseconds / 1000d;
             File.AppendAllText("log.txt", $"time taken: {timeTaken}\n");
-            File.AppendAllText("log.txt", $"depth completed: {completedDepth}\n\n");
+            File.AppendAllText("log.txt", $"depth completed: {completedDepth}\n");
+            currentBestMove.MovePiece(board);
+            File.AppendAllText("log.txt", $"board evaluation: {board.GetBoardValue() * multiplier / 100d}\n\n");
+            currentBestMove.ReverseMove(board);
         }
 
         private int RecursiveMinMaxed(Board board, int depth, int aiColour, int multiplier, int alpha, int beta)
