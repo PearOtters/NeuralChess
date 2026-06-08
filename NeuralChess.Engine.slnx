@@ -1,3 +1,4 @@
 <Solution>
+  <Project Path="NeuralChess.DataGenerator/NeuralChess.DataGenerator.csproj" Id="f75a2e75-393c-4e90-94c1-42cf50481fdd" />
   <Project Path="NeuralChess.Engine/NeuralChess.Engine.csproj" />
 </Solution>
