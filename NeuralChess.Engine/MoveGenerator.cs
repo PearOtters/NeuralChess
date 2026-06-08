@@ -541,6 +541,445 @@ namespace NeuralChess.Engine
             moves.Add(new Move(piece, BitOperations.TrailingZeroCount(king), destination, SpecialMove.CASTLE));
         }
 
+        public static List<Move> GenerateAllCaptures(Board board)
+        {
+            List<Move> moves = [];
+            if (board.ActiveColour == Colour.White)
+            {
+                GenerateWhitePawnCaptures(board, moves);
+                GenerateWhiteKnightCaptures(board, moves);
+                GenerateWhiteBishopCaptures(board, moves);
+                GenerateWhiteRookCaptures(board, moves);
+                GenerateWhiteQueenCaptures(board, moves);
+                GenerateWhiteKingCaptures(board, moves);
+            }
+            else
+            {
+                GenerateBlackPawnCaptures(board, moves);
+                GenerateBlackKnightCaptures(board, moves);
+                GenerateBlackBishopCaptures(board, moves);
+                GenerateBlackRookCaptures(board, moves);
+                GenerateBlackQueenCaptures(board, moves);
+                GenerateBlackKingCaptures(board, moves);
+            }
+
+            return moves;
+        }
+
+        public static void GenerateWhitePawnCaptures(Board board, List<Move> moves)
+        {
+            int piece = Piece.WhitePawn;
+            ulong pawns = board.Pieces[Piece.WhitePawn];
+
+            ulong u1l1 = ((pawns & Constants.NotAFile) << 7) & board.Colours[Colour.Black];
+            ExtractMoves(piece, u1l1, -7, moves);
+
+            ulong u1r1 = ((pawns & Constants.NotHFile) << 9) & board.Colours[Colour.Black];
+            ExtractMoves(piece, u1r1, -9, moves);
+
+            if (board.EnPassantSquare != -1)
+            {
+                ulong EnPassantMask = 1UL << board.EnPassantSquare;
+
+                ulong capLeft = ((pawns & Constants.NotAFile) << 7) & EnPassantMask;
+                if (capLeft != 0) moves.Add(new Move(piece, board.EnPassantSquare - 7, board.EnPassantSquare, SpecialMove.EN_PASSANT));
+
+                ulong capRight = ((pawns & Constants.NotHFile) << 9) & EnPassantMask;
+                if (capRight != 0) moves.Add(new Move(piece, board.EnPassantSquare - 9, board.EnPassantSquare, SpecialMove.EN_PASSANT));
+            }
+        }
+
+        public static void GenerateBlackPawnCaptures(Board board, List<Move> moves)
+        {
+            int piece = Piece.BlackPawn;
+            ulong pawns = board.Pieces[Piece.BlackPawn];
+
+            ulong d1r1 = ((pawns & Constants.NotHFile) >> 7) & board.Colours[Colour.White];
+            ExtractMoves(piece, d1r1, 7, moves);
+
+            ulong d1l1 = ((pawns & Constants.NotAFile) >> 9) & board.Colours[Colour.White];
+            ExtractMoves(piece, d1l1, 9, moves);
+
+            if (board.EnPassantSquare != -1)
+            {
+                ulong EnPassantMask = 1UL << board.EnPassantSquare;
+
+                ulong capLeft = ((pawns & Constants.NotAFile) >> 9) & EnPassantMask;
+                if (capLeft != 0) moves.Add(new Move(piece, board.EnPassantSquare + 9, board.EnPassantSquare, SpecialMove.EN_PASSANT));
+
+                ulong capRight = ((pawns & Constants.NotHFile) >> 7) & EnPassantMask;
+                if (capRight != 0) moves.Add(new Move(piece, board.EnPassantSquare + 7, board.EnPassantSquare, SpecialMove.EN_PASSANT));
+            }
+        }
+
+        public static void GenerateWhiteKnightCaptures(Board board, List<Move> moves)
+        {
+            int piece = Piece.WhiteKnight;
+            ulong knights = board.Pieces[Piece.WhiteKnight];
+            ulong attack = board.Colours[Colour.Black];
+
+            ulong u2l1 = ((knights & Constants.NotAFile) << 15) & attack;
+            ExtractMoves(piece, u2l1, -15, moves);
+
+            ulong u2r1 = ((knights & Constants.NotHFile) << 17) & attack;
+            ExtractMoves(piece, u2r1, -17, moves);
+
+            ulong d2l1 = ((knights & Constants.NotAFile) >> 17) & attack;
+            ExtractMoves(piece, d2l1, 17, moves);
+
+            ulong d2r1 = ((knights & Constants.NotHFile) >> 15) & attack;
+            ExtractMoves(piece, d2r1, 15, moves);
+
+            ulong u1l2 = ((knights & Constants.NotABFile) << 6) & attack;
+            ExtractMoves(piece, u1l2, -6, moves);
+
+            ulong u1r2 = ((knights & Constants.NotGHFile) << 10) & attack;
+            ExtractMoves(piece, u1r2, -10, moves);
+
+            ulong d1l2 = ((knights & Constants.NotABFile) >> 10) & attack;
+            ExtractMoves(piece, d1l2, 10, moves);
+
+            ulong d1r2 = ((knights & Constants.NotGHFile) >> 6) & attack;
+            ExtractMoves(piece, d1r2, 6, moves);
+        }
+
+        public static void GenerateBlackKnightCaptures(Board board, List<Move> moves)
+        {
+            int piece = Piece.BlackKnight;
+            ulong knights = board.Pieces[Piece.BlackKnight];
+            ulong attack = board.Colours[Colour.White];
+
+            ulong u2l1 = ((knights & Constants.NotAFile) << 15) & attack;
+            ExtractMoves(piece, u2l1, -15, moves);
+
+            ulong u2r1 = ((knights & Constants.NotHFile) << 17) & attack;
+            ExtractMoves(piece, u2r1, -17, moves);
+
+            ulong d2l1 = ((knights & Constants.NotAFile) >> 17) & attack;
+            ExtractMoves(piece, d2l1, 17, moves);
+
+            ulong d2r1 = ((knights & Constants.NotHFile) >> 15) & attack;
+            ExtractMoves(piece, d2r1, 15, moves);
+
+            ulong u1l2 = ((knights & Constants.NotABFile) << 6) & attack;
+            ExtractMoves(piece, u1l2, -6, moves);
+
+            ulong u1r2 = ((knights & Constants.NotGHFile) << 10) & attack;
+            ExtractMoves(piece, u1r2, -10, moves);
+
+            ulong d1l2 = ((knights & Constants.NotABFile) >> 10) & attack;
+            ExtractMoves(piece, d1l2, 10, moves);
+
+            ulong d1r2 = ((knights & Constants.NotGHFile) >> 6) & attack;
+            ExtractMoves(piece, d1r2, 6, moves);
+        }
+
+        public static void GenerateWhiteBishopCaptures(Board board, List<Move> moves)
+        {
+            int piece = Piece.WhiteBishop;
+            ulong bishops = board.Pieces[Piece.WhiteBishop];
+            ulong notPiece = ~board.AllPieces;
+            ulong attack = board.Colours[Colour.Black];
+
+            ulong posu1l1 = bishops;
+            ulong posu1r1 = bishops;
+            ulong posd1l1 = bishops;
+            ulong posd1r1 = bishops;
+
+            for (int i = 1; i < 8; i++)
+            {
+                ulong u1l1 = (posu1l1 & Constants.NotAFile) << 7;
+                ExtractMoves(piece, u1l1 & attack, -7 * i, moves);
+                posu1l1 = u1l1 & notPiece;
+
+                ulong u1r1 = (posu1r1 & Constants.NotHFile) << 9;
+                ExtractMoves(piece, u1r1 & attack, -9 * i, moves);
+                posu1r1 = u1r1 & notPiece;
+
+                ulong d1l1 = (posd1l1 & Constants.NotAFile) >> 9;
+                ExtractMoves(piece, d1l1 & attack, 9 * i, moves);
+                posd1l1 = d1l1 & notPiece;
+
+                ulong d1r1 = (posd1r1 & Constants.NotHFile) >> 7;
+                ExtractMoves(piece, d1r1 & attack, 7 * i, moves);
+                posd1r1 = d1r1 & notPiece;
+
+                if ((posu1l1 | posu1r1 | posd1l1 | posd1r1) == 0) break;
+            }
+        }
+
+        public static void GenerateBlackBishopCaptures(Board board, List<Move> moves)
+        {
+            int piece = Piece.BlackBishop;
+            ulong bishops = board.Pieces[Piece.BlackBishop];
+            ulong notPiece = ~board.AllPieces;
+            ulong attack = board.Colours[Colour.White];
+
+            ulong posu1l1 = bishops;
+            ulong posu1r1 = bishops;
+            ulong posd1l1 = bishops;
+            ulong posd1r1 = bishops;
+
+            for (int i = 1; i < 8; i++)
+            {
+                ulong u1l1 = (posu1l1 & Constants.NotAFile) << 7;
+                ExtractMoves(piece, u1l1 & attack, -7 * i, moves);
+                posu1l1 = u1l1 & notPiece;
+
+                ulong u1r1 = (posu1r1 & Constants.NotHFile) << 9;
+                ExtractMoves(piece, u1r1 & attack, -9 * i, moves);
+                posu1r1 = u1r1 & notPiece;
+
+                ulong d1l1 = (posd1l1 & Constants.NotAFile) >> 9;
+                ExtractMoves(piece, d1l1 & attack, 9 * i, moves);
+                posd1l1 = d1l1 & notPiece;
+
+                ulong d1r1 = (posd1r1 & Constants.NotHFile) >> 7;
+                ExtractMoves(piece, d1r1 & attack, 7 * i, moves);
+                posd1r1 = d1r1 & notPiece;
+
+                if ((posu1l1 | posu1r1 | posd1l1 | posd1r1) == 0) break;
+            }
+        }
+
+        public static void GenerateWhiteRookCaptures(Board board, List<Move> moves)
+        {
+            int piece = Piece.WhiteRook;
+            ulong rooks = board.Pieces[Piece.WhiteRook];
+            ulong notPiece = ~board.AllPieces;
+            ulong attack = board.Colours[Colour.Black];
+
+            ulong posu1 = rooks;
+            ulong posd1 = rooks;
+            ulong posl1 = rooks;
+            ulong posr1 = rooks;
+
+            for (int i = 1; i < 8; i++)
+            {
+                ulong u1 = posu1 << 8;
+                ExtractMoves(piece, u1 & attack, -8 * i, moves);
+                posu1 = u1 & notPiece;
+
+                ulong d1 = posd1 >> 8;
+                ExtractMoves(piece, d1 & attack, 8 * i, moves);
+                posd1 = d1 & notPiece;
+
+                ulong l1 = (posl1 & Constants.NotAFile) >> 1;
+                ExtractMoves(piece, l1 & attack, 1 * i, moves);
+                posl1 = l1 & notPiece;
+
+                ulong r1 = (posr1 & Constants.NotHFile) << 1;
+                ExtractMoves(piece, r1 & attack, -1 * i, moves);
+                posr1 = r1 & notPiece;
+
+                if ((posu1 | posd1 | posl1 | posr1) == 0) break;
+            }
+        }
+
+        public static void GenerateBlackRookCaptures(Board board, List<Move> moves)
+        {
+            int piece = Piece.BlackRook;
+            ulong rooks = board.Pieces[Piece.BlackRook];
+            ulong notPiece = ~board.AllPieces;
+            ulong attack = board.Colours[Colour.White];
+
+            ulong posu1 = rooks;
+            ulong posd1 = rooks;
+            ulong posl1 = rooks;
+            ulong posr1 = rooks;
+
+            for (int i = 1; i < 8; i++)
+            {
+                ulong u1 = posu1 << 8;
+                ExtractMoves(piece, u1 & attack, -8 * i, moves);
+                posu1 = u1 & notPiece;
+
+                ulong d1 = posd1 >> 8;
+                ExtractMoves(piece, d1 & attack, 8 * i, moves);
+                posd1 = d1 & notPiece;
+
+                ulong l1 = (posl1 & Constants.NotAFile) >> 1;
+                ExtractMoves(piece, l1 & attack, 1 * i, moves);
+                posl1 = l1 & notPiece;
+
+                ulong r1 = (posr1 & Constants.NotHFile) << 1;
+                ExtractMoves(piece, r1 & attack, -1 * i, moves);
+                posr1 = r1 & notPiece;
+
+                if ((posu1 | posd1 | posl1 | posr1) == 0) break;
+            }
+        }
+
+        public static void GenerateWhiteQueenCaptures(Board board, List<Move> moves)
+        {
+            int piece = Piece.WhiteQueen;
+            ulong queens = board.Pieces[Piece.WhiteQueen];
+            ulong notPiece = ~board.AllPieces;
+            ulong attack = board.Colours[Colour.Black];
+
+            ulong posu1 = queens;
+            ulong posd1 = queens;
+            ulong posl1 = queens;
+            ulong posr1 = queens;
+            ulong posu1l1 = queens;
+            ulong posu1r1 = queens;
+            ulong posd1l1 = queens;
+            ulong posd1r1 = queens;
+
+            for (int i = 1; i < 8; i++)
+            {
+                ulong u1 = posu1 << 8;
+                ExtractMoves(piece, u1 & attack, -8 * i, moves);
+                posu1 = u1 & notPiece;
+
+                ulong d1 = posd1 >> 8;
+                ExtractMoves(piece, d1 & attack, 8 * i, moves);
+                posd1 = d1 & notPiece;
+
+                ulong l1 = (posl1 & Constants.NotAFile) >> 1;
+                ExtractMoves(piece, l1 & attack, 1 * i, moves);
+                posl1 = l1 & notPiece;
+
+                ulong r1 = (posr1 & Constants.NotHFile) << 1;
+                ExtractMoves(piece, r1 & attack, -1 * i, moves);
+                posr1 = r1 & notPiece;
+
+                ulong u1l1 = (posu1l1 & Constants.NotAFile) << 7;
+                ExtractMoves(piece, u1l1 & attack, -7 * i, moves);
+                posu1l1 = u1l1 & notPiece;
+
+                ulong u1r1 = (posu1r1 & Constants.NotHFile) << 9;
+                ExtractMoves(piece, u1r1 & attack, -9 * i, moves);
+                posu1r1 = u1r1 & notPiece;
+
+                ulong d1l1 = (posd1l1 & Constants.NotAFile) >> 9;
+                ExtractMoves(piece, d1l1 & attack, 9 * i, moves);
+                posd1l1 = d1l1 & notPiece;
+
+                ulong d1r1 = (posd1r1 & Constants.NotHFile) >> 7;
+                ExtractMoves(piece, d1r1 & attack, 7 * i, moves);
+                posd1r1 = d1r1 & notPiece;
+
+                if ((posu1 | posd1 | posl1 | posr1 | posu1l1 | posu1r1 | posd1l1 | posd1r1) == 0) break;
+            }
+        }
+
+        public static void GenerateBlackQueenCaptures(Board board, List<Move> moves)
+        {
+            int piece = Piece.BlackQueen;
+            ulong queens = board.Pieces[Piece.BlackQueen];
+            ulong notPiece = ~board.AllPieces;
+            ulong attack = board.Colours[Colour.White];
+
+            ulong posu1 = queens;
+            ulong posd1 = queens;
+            ulong posl1 = queens;
+            ulong posr1 = queens;
+            ulong posu1l1 = queens;
+            ulong posu1r1 = queens;
+            ulong posd1l1 = queens;
+            ulong posd1r1 = queens;
+
+            for (int i = 1; i < 8; i++)
+            {
+                ulong u1 = posu1 << 8;
+                ExtractMoves(piece, u1 & attack, -8 * i, moves);
+                posu1 = u1 & notPiece;
+
+                ulong d1 = posd1 >> 8;
+                ExtractMoves(piece, d1 & attack, 8 * i, moves);
+                posd1 = d1 & notPiece;
+
+                ulong l1 = (posl1 & Constants.NotAFile) >> 1;
+                ExtractMoves(piece, l1 & attack, 1 * i, moves);
+                posl1 = l1 & notPiece;
+
+                ulong r1 = (posr1 & Constants.NotHFile) << 1;
+                ExtractMoves(piece, r1 & attack, -1 * i, moves);
+                posr1 = r1 & notPiece;
+
+                ulong u1l1 = (posu1l1 & Constants.NotAFile) << 7;
+                ExtractMoves(piece, u1l1 & attack, -7 * i, moves);
+                posu1l1 = u1l1 & notPiece;
+
+                ulong u1r1 = (posu1r1 & Constants.NotHFile) << 9;
+                ExtractMoves(piece, u1r1 & attack, -9 * i, moves);
+                posu1r1 = u1r1 & notPiece;
+
+                ulong d1l1 = (posd1l1 & Constants.NotAFile) >> 9;
+                ExtractMoves(piece, d1l1 & attack, 9 * i, moves);
+                posd1l1 = d1l1 & notPiece;
+
+                ulong d1r1 = (posd1r1 & Constants.NotHFile) >> 7;
+                ExtractMoves(piece, d1r1 & attack, 7 * i, moves);
+                posd1r1 = d1r1 & notPiece;
+
+                if ((posu1 | posd1 | posl1 | posr1 | posu1l1 | posu1r1 | posd1l1 | posd1r1) == 0) break;
+            }
+        }
+
+        public static void GenerateWhiteKingCaptures(Board board, List<Move> moves)
+        {
+            int piece = Piece.WhiteKing;
+            ulong kings = board.Pieces[Piece.WhiteKing];
+            ulong attack = board.Colours[Colour.Black];
+
+            ulong u1 = (kings << 8) & attack;
+            ExtractMoves(piece, u1, -8, moves);
+
+            ulong d1 = (kings >> 8) & attack;
+            ExtractMoves(piece, d1, 8, moves);
+
+            ulong l1 = ((kings & Constants.NotAFile) >> 1) & attack;
+            ExtractMoves(piece, l1, 1, moves);
+
+            ulong r1 = ((kings & Constants.NotHFile) << 1) & attack;
+            ExtractMoves(piece, r1, -1, moves);
+
+            ulong u1l1 = ((kings & Constants.NotAFile) << 7) & attack;
+            ExtractMoves(piece, u1l1, -7, moves);
+
+            ulong u1r1 = ((kings & Constants.NotHFile) << 9) & attack;
+            ExtractMoves(piece, u1r1, -9, moves);
+
+            ulong d1l1 = ((kings & Constants.NotAFile) >> 9) & attack;
+            ExtractMoves(piece, d1l1, 9, moves);
+
+            ulong d1r1 = ((kings & Constants.NotHFile) >> 7) & attack;
+            ExtractMoves(piece, d1r1, 7, moves);
+        }
+
+        public static void GenerateBlackKingCaptures(Board board, List<Move> moves)
+        {
+            int piece = Piece.BlackKing;
+            ulong kings = board.Pieces[Piece.BlackKing];
+            ulong attack = board.Colours[Colour.White];
+
+            ulong u1 = (kings << 8) & attack;
+            ExtractMoves(piece, u1, -8, moves);
+
+            ulong d1 = (kings >> 8) & attack;
+            ExtractMoves(piece, d1, 8, moves);
+
+            ulong l1 = ((kings & Constants.NotAFile) >> 1) & attack;
+            ExtractMoves(piece, l1, 1, moves);
+
+            ulong r1 = ((kings & Constants.NotHFile) << 1) & attack;
+            ExtractMoves(piece, r1, -1, moves);
+
+            ulong u1l1 = ((kings & Constants.NotAFile) << 7) & attack;
+            ExtractMoves(piece, u1l1, -7, moves);
+
+            ulong u1r1 = ((kings & Constants.NotHFile) << 9) & attack;
+            ExtractMoves(piece, u1r1, -9, moves);
+
+            ulong d1l1 = ((kings & Constants.NotAFile) >> 9) & attack;
+            ExtractMoves(piece, d1l1, 9, moves);
+
+            ulong d1r1 = ((kings & Constants.NotHFile) >> 7) & attack;
+            ExtractMoves(piece, d1r1, 7, moves);
+        }
+
         public static void ExtractMoves(int piece, ulong bitboard, int offset, List<Move> moves)
         {
             int colour = piece < 6 ? Colour.White : Colour.Black;
