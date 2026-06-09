@@ -4,7 +4,7 @@
     {
         static void Main()
         {
-            Console.WriteLine("Hello World");
+            DataGenerator.PopulateData(100_000_000);
         }
     }
 }
