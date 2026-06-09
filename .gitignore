@@ -373,3 +373,4 @@ env/
 *.pt
 *.pth
 *.onnx
+NeuralChess.DataGenerator/stockfish.exe

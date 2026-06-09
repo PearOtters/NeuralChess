@@ -11,4 +11,10 @@
     <ProjectReference Include="..\NeuralChess.Engine\NeuralChess.Engine.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="stockfish.exe">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>
