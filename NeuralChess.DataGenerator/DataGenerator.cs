@@ -26,15 +26,15 @@ namespace NeuralChess.DataGenerator
             Console.WriteLine($"0% completed\nStarted calculations at {startedAt}\nLast updated {startedAt}\nCurrently at 0/{numOfPositions:N0} positions");
 
             HashSet<int> seperations = [];
-            double numOfSeperations = 10_000;
-            double seperation = numOfPositions / numOfSeperations;
+            int numOfSeperations = 10_000;
+            int seperation = numOfPositions / numOfSeperations;
 
             for (int i = 1; i <= numOfSeperations; i++)
             {
-                seperations.Add((int)seperation * i);
+                seperations.Add(seperation * i);
             }
 
-            for (double i = 0; i < numOfPositions; i++)
+            for (int i = 0; i < numOfPositions; i++)
             {
                 string? fen = GenerateRandomBoardFEN(rng);
 
@@ -44,11 +44,20 @@ namespace NeuralChess.DataGenerator
                     writer.WriteLine($"{fen},{stockfishScore}");
                 }
 
-                if (seperations.Contains((int)i))
+                if (seperations.Contains(i))
                 {
                     Console.Clear();
-                    Console.WriteLine($"{i / numOfSeperations * 100d / seperation:F2}% completed\nStarted calculations at {startedAt}\n" +
-                        $"Last updated {DateTime.Now}\nCurrently at {i:N0}/{numOfPositions:N0} positions");
+                    DateTime currentTime = DateTime.Now;
+                    TimeSpan timeSpent = currentTime - startedAt;
+                    double percentageDone = (double)i / (double)numOfPositions * 100;
+                    double totalEstimatedMinutes = (100.0 / percentageDone) * timeSpent.TotalMinutes;
+                    double remainingMinutes = totalEstimatedMinutes - timeSpent.TotalMinutes;
+                    DateTime estimatedFinishTime = currentTime.AddMinutes(remainingMinutes);
+
+                    Console.WriteLine($"{percentageDone:F2}% completed\nStarted calculations at {startedAt}\n" +
+                        $"Last updated {currentTime}\nCurrently at {i:N0}/{numOfPositions:N0} positions");
+                    Console.WriteLine($"Total time spent: {timeSpent.TotalMinutes:F2} minutes");
+                    Console.WriteLine($"Estimated time to finish: {estimatedFinishTime:HH:mm:ss} (on {estimatedFinishTime:yyyy-MM-dd})");
                 }
             }
 
