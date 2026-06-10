@@ -1,70 +1,108 @@
 ﻿using NeuralChess.Engine;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace NeuralChess.DataGenerator
 {
     public class DataGenerator
     {
-        private static Process? stockfishProcess;
-        private static StreamWriter? stockfishIn;
-        private static StreamReader? stockfishOut;
-
         public static void PopulateData(int numOfPositions, int? seed = null)
         {
-            Random rng = seed.HasValue ? new Random(seed.Value) : new Random();
-
-            InitializeStockfish();
-
-            using StreamWriter writer = new("chess_dataset.csv", true);
+            int workerThreads = Math.Max(1, Environment.ProcessorCount - 2);
 
             DateTime startedAt = DateTime.Now;
+            long globalProcessedCount = 0;
+
+            object fileLock = new();
+            using StreamWriter writer = new("chess_dataset.csv", true, Encoding.UTF8, 65536);
 
             Console.Clear();
-            Console.WriteLine($"0% completed\nStarted calculations at {startedAt}\nLast updated {startedAt}\nCurrently at 0/{numOfPositions:N0} positions");
+            Console.WriteLine($"Launching data generator with {workerThreads} parallel Stockfish instances...");
 
-            HashSet<int> seperations = [];
-            int numOfSeperations = 10_000;
-            int seperation = numOfPositions / numOfSeperations;
-
-            for (int i = 1; i <= numOfSeperations; i++)
+            Parallel.For(0, workerThreads, workerId =>
             {
-                seperations.Add(seperation * i);
-            }
+                var (stockfishProcess, stockfishIn, stockfishOut) = InitializeStockfishInstance();
 
-            for (int i = 0; i < numOfPositions; i++)
-            {
-                string? fen = GenerateRandomBoardFEN(rng);
+                Random rng = new(seed.HasValue ? seed.Value + workerId : Guid.NewGuid().GetHashCode());
 
-                if (fen != null)
+                List<string> localBuffer = new(1000);
+
+                int positionsPerWorker = numOfPositions / workerThreads;
+
+                for (int i = 0; i < positionsPerWorker; i++)
                 {
-                    string? stockfishScore = GetStockfishEvaluation(fen);
-                    writer.WriteLine($"{fen},{stockfishScore}");
+                    string? fen = GenerateRandomBoardFEN(rng);
+                    if (fen != null)
+                    {
+                        string? stockfishScore = GetStockfishEvaluation(fen, stockfishIn, stockfishOut);
+                        if (stockfishScore != null)
+                        {
+                            localBuffer.Add($"{fen},{stockfishScore}");
+                        }
+                    }
+
+                    if (localBuffer.Count >= 500)
+                    {
+                        lock (fileLock)
+                        {
+                            foreach (var line in localBuffer)
+                            {
+                                writer.WriteLine(line);
+                            }
+                        }
+                        localBuffer.Clear();
+
+                        long currentProgress = Interlocked.Add(ref globalProcessedCount, 500);
+
+                        if (currentProgress % 50_000 == 0)
+                        {
+                            PrintProgressUpdate(currentProgress, numOfPositions, startedAt);
+                        }
+                    }
                 }
 
-                if (seperations.Contains(i))
+                if (localBuffer.Count > 0)
                 {
-                    Console.Clear();
-                    DateTime currentTime = DateTime.Now;
-                    TimeSpan timeSpent = currentTime - startedAt;
-                    double percentageDone = (double)i / (double)numOfPositions * 100;
-                    double totalEstimatedMinutes = (100.0 / percentageDone) * timeSpent.TotalMinutes;
-                    double remainingMinutes = totalEstimatedMinutes - timeSpent.TotalMinutes;
-                    DateTime estimatedFinishTime = currentTime.AddMinutes(remainingMinutes);
-
-                    Console.WriteLine($"{percentageDone:F2}% completed\nStarted calculations at {startedAt}\n" +
-                        $"Last updated {currentTime}\nCurrently at {i:N0}/{numOfPositions:N0} positions");
-                    Console.WriteLine($"Total time spent: {timeSpent.TotalMinutes:F2} minutes");
-                    Console.WriteLine($"Estimated time to finish: {estimatedFinishTime:HH:mm:ss} on {estimatedFinishTime:yyyy-MM-dd}");
+                    lock (fileLock)
+                    {
+                        foreach (var line in localBuffer) writer.WriteLine(line);
+                    }
+                    Interlocked.Add(ref globalProcessedCount, localBuffer.Count);
                 }
-            }
-            if (stockfishIn != null && stockfishProcess != null)
-            {
+
                 stockfishIn.WriteLine("quit");
                 stockfishProcess.WaitForExit();
+                stockfishProcess.Dispose();
+            });
+
+            Console.WriteLine($"\nSuccessfully completed! Data saved to chess_dataset.csv");
+        }
+
+        private static void PrintProgressUpdate(long current, int total, DateTime start)
+        {
+            DateTime now = DateTime.Now;
+            TimeSpan elapsed = now - start;
+            double percent = (double)current / total * 100;
+            double positionsPerSecond = current / elapsed.TotalSeconds;
+
+            string etaDisplay = "Calculating...";
+
+            if (current > 0 && positionsPerSecond > 0)
+            {
+                double remainingPositions = total - current;
+                double remainingSeconds = remainingPositions / positionsPerSecond;
+                DateTime estimatedFinishTime = now.AddSeconds(remainingSeconds);
+
+                etaDisplay = estimatedFinishTime.ToString("HH:mm:ss dd/MM/yy");
             }
+
+            Console.Write($"\rProgress: {percent:F2}% | Processed: {current:N0}/{total:N0} | Speed: {positionsPerSecond:F0} pos/sec | Elapsed: {elapsed.TotalMinutes:F1}m | ETA: {etaDisplay}");
         }
 
         private static bool MakeRandomMove(Board board, Random rng)
@@ -74,16 +112,10 @@ namespace NeuralChess.DataGenerator
 
             foreach (Move move in moves)
             {
-                if (move.IsLegal(board))
-                {
-                    legalMoves.Add(move);
-                }
+                if (move.IsLegal(board)) legalMoves.Add(move);
             }
 
-            if (legalMoves.Count == 0)
-            {
-                return false;
-            }
+            if (legalMoves.Count == 0) return false;
 
             Move toMove = legalMoves[rng.Next(legalMoves.Count)];
             toMove.MovePiece(board);
@@ -94,7 +126,6 @@ namespace NeuralChess.DataGenerator
         private static string? GenerateRandomBoardFEN(Random rng)
         {
             Board board = new();
-
             int numberOfMoves = rng.Next(10, 60);
 
             for (int i = 0; i < numberOfMoves; i++)
@@ -110,52 +141,45 @@ namespace NeuralChess.DataGenerator
             return board.ToFEN();
         }
 
-        private static string? GetStockfishEvaluation(string fen)
+        private static string? GetStockfishEvaluation(string fen, StreamWriter stockfishIn, StreamReader stockfishOut)
         {
-            if (stockfishIn != null && stockfishOut != null)
+            stockfishIn.WriteLine($"position fen {fen}");
+            stockfishIn.WriteLine("go depth 10");
+
+            string bestScore = "0";
+
+            while (true)
             {
-                stockfishIn.WriteLine($"position fen {fen}");
-                stockfishIn.WriteLine("go depth 10");
+                string? line = stockfishOut.ReadLine();
+                if (line == null) break;
 
-                string bestScore = "0";
-
-                while (true)
+                if (line.StartsWith("info depth 10 ") && line.Contains("score"))
                 {
-                    string? line = stockfishOut.ReadLine();
-                    if (line == null) break;
-
-                    if (line.StartsWith("info depth 10") && line.Contains("score"))
+                    string[] tokens = line.Split(' ');
+                    for (int i = 0; i < tokens.Length; i++)
                     {
-                        string[] tokens = line.Split(' ');
-                        for (int i = 0; i < tokens.Length; i++)
+                        if (tokens[i] == "score")
                         {
-                            if (tokens[i] == "score")
+                            if (tokens[i + 1] == "cp")
                             {
-                                if (tokens[i + 1] == "cp")
-                                {
-                                    bestScore = tokens[i + 2];
-                                }
-                                else if (tokens[i + 1] == "mate")
-                                {
-                                    int mateIn = int.Parse(tokens[i + 2]);
-                                    bestScore = mateIn > 0 ? "10000" : "-10000";
-                                }
-                                break;
+                                bestScore = tokens[i + 2];
                             }
+                            else if (tokens[i + 1] == "mate")
+                            {
+                                int mateIn = int.Parse(tokens[i + 2]);
+                                bestScore = mateIn > 0 ? "10000" : "-10000";
+                            }
+                            break;
                         }
                     }
-
-                    if (line.StartsWith("bestmove"))
-                    {
-                        break;
-                    }
                 }
-                return bestScore;
+
+                if (line.StartsWith("bestmove")) break;
             }
-            return null;
+            return bestScore;
         }
 
-        private static void InitializeStockfish()
+        private static (Process, StreamWriter, StreamReader) InitializeStockfishInstance()
         {
             ProcessStartInfo psi = new()
             {
@@ -166,21 +190,22 @@ namespace NeuralChess.DataGenerator
                 CreateNoWindow = true
             };
 
-            stockfishProcess = Process.Start(psi);
-            if (stockfishProcess != null)
+            Process process = Process.Start(psi) ?? throw new InvalidOperationException("Failed to boot Stockfish.");
+            StreamWriter si = process.StandardInput;
+            StreamReader so = process.StandardOutput;
+
+            si.WriteLine("uci");
+            si.WriteLine("setoption name Threads value 1");
+            si.WriteLine("setoption name Hash value 16");
+            si.WriteLine("isready");
+
+            string? line;
+            while ((line = so.ReadLine()) != null)
             {
-                stockfishIn = stockfishProcess.StandardInput;
-                stockfishOut = stockfishProcess.StandardOutput;
-
-                stockfishIn.WriteLine("uci");
-                stockfishIn.WriteLine("isready");
-
-                string? line;
-                while ((line = stockfishOut.ReadLine()) != null)
-                {
-                    if (line == "readyok") break;
-                }
+                if (line == "readyok") break;
             }
+
+            return (process, si, so);
         }
     }
 }
