@@ -13,7 +13,7 @@ criterion = nn.MSELoss()
 optimizer = optim.Adam(model.parameters(), lr=0.001)
 scaler = GradScaler("xpu")
 
-dataset = ChunkedChessDataset(folder_path="./dataset_chunks_5mil")
+dataset = ChunkedChessDataset(folder_path="./dataset_chunks_100thou")
 train_loader = DataLoader(dataset, batch_size=1024)
 
 model.train()
@@ -44,3 +44,6 @@ for epoch in range(1, 4):
             print(f"Epoch {epoch} | Batch {batch_count} | Current Loss: {loss.item():.4f}")
 
     print(f"=== Epoch {epoch} Complete! Average Loss: {running_loss / batch_count:.4f} ===")
+
+torch.save(model.state_dict(), "chess_model_weights.pth")
+print("Weights successfully saved to disk!")
