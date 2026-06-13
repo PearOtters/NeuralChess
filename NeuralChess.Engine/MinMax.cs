@@ -7,7 +7,7 @@ using System.IO;
 
 namespace NeuralChess.Engine
 {
-    public class MinMax(int MaxDepth, bool UseAlphaBeta = false) : Engine(UseAlphaBeta ? $"AlphaBeta {MaxDepth}" : $"MinMax {MaxDepth}")
+    public class MinMax(int MaxDepth, bool UseAlphaBeta = false, bool UseNeuralNetwork = true) : Engine(UseAlphaBeta ? $"AlphaBeta {MaxDepth}" : $"MinMax {MaxDepth}")
     {
         private const int CheckmateScore = 1000000;
         private static readonly int[] MVV_LVA_Values =
@@ -106,7 +106,8 @@ namespace NeuralChess.Engine
             File.AppendAllText("log.txt", $"time taken: {timeTaken}\n");
             File.AppendAllText("log.txt", $"depth completed: {completedDepth}\n");
             currentBestMove.MovePiece(board);
-            File.AppendAllText("log.txt", $"board evaluation: {board.GetBoardValue() * multiplier / 100d}\n\n");
+            if (UseNeuralNetwork) File.AppendAllText("log.txt", $"board evaluation: {NeuralNetworkHandler.GetBoardValue(board) * multiplier / 100d}\n\n");
+            else File.AppendAllText("log.txt", $"board evaluation: {board.GetBoardValue() * multiplier / 100d}\n\n");
             currentBestMove.ReverseMove(board);
         }
 
@@ -212,7 +213,7 @@ namespace NeuralChess.Engine
 
         private int QuiescenceSearch(Board board, int aiColour, int multiplier, int alpha, int beta)
         {
-            int standPat = board.GetBoardValue() * multiplier;
+            int standPat = (UseNeuralNetwork ? NeuralNetworkHandler.GetBoardValue(board) : board.GetBoardValue()) * multiplier;
             bool isMaximising = (aiColour == board.ActiveColour);
 
             if (UseAlphaBeta)
