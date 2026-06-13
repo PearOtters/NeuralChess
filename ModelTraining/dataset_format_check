@@ -2,7 +2,7 @@ import re
 import sys
 import time
 
-INPUT_FILE = "chess_dataset_small.csv"
+INPUT_FILE = "chess_dataset.csv"
 LOG_FILE = "corrupt_lines_report.txt"
 DELIMITER = ","
 PROGRESS_INTERVAL = 5_000_000
