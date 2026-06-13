@@ -13,7 +13,7 @@ torch.onnx.export(
     dummy_input,
     "ChessValueNet.onnx",
     export_params=True,
-    opset_version=18,
+    opset_version=14,
     input_names=['board_input'],
     output_names=['eval_output'],
     dynamic_axes={
