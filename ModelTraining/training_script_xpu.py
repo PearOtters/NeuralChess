@@ -14,7 +14,7 @@ criterion = nn.MSELoss()
 optimizer = optim.Adam(model.parameters(), lr=0.001)
 scaler = GradScaler("xpu")
 
-dataset = ChunkedChessDataset(folder_path="./dataset_chunks")
+dataset = ChunkedChessDataset(folder_path="./train_dataset_chunks")
 train_loader = DataLoader(dataset, batch_size=1024)
 
 model.train()
