@@ -5,7 +5,7 @@ import torch.optim as optim
 from torch.amp import GradScaler, autocast
 from model import ChessValueNet
 from dataset_manager import ChunkedChessDataset
-import datetime
+from datetime import datetime
 
 device = torch.device("xpu" if torch.xpu.is_available() else "cpu")
 model = ChessValueNet().to(device)
@@ -42,7 +42,7 @@ for epoch in range(1, 4):
         batch_count += 1
 
         if batch_count % 50 == 0:
-            print(f"Epoch {epoch} | Batch {batch_count} | Current Loss: {loss.item():.4f} | Time: {datetime.now}")
+            print(f"Epoch {epoch} | Batch {batch_count} | Current Loss: {loss.item():.4f} | Time: {datetime.now()}")
 
     print(f"=== Epoch {epoch} Complete! Average Loss: {running_loss / batch_count:.4f} ===")
 
