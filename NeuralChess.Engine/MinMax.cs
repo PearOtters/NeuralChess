@@ -7,7 +7,7 @@ using System.IO;
 
 namespace NeuralChess.Engine
 {
-    public class MinMax(int MaxDepth, bool UseAlphaBeta = false, bool UseNeuralNetwork = true) : Engine(UseAlphaBeta ? $"AlphaBeta {MaxDepth}" : $"MinMax {MaxDepth}")
+    public class MinMax(int MaxDepth, bool UseAlphaBeta = false, bool UseNeuralNetwork = true) : Engine($"{(UseAlphaBeta ? "AlphaBeta" : "MinMax")} {(UseNeuralNetwork ? "Neural Network" : "")} Def {MaxDepth}")
     {
         private const int CheckmateScore = 1000000;
         private static readonly int[] MVV_LVA_Values =
@@ -105,9 +105,11 @@ namespace NeuralChess.Engine
             double timeTaken = searchTimer.ElapsedMilliseconds / 1000d;
             File.AppendAllText("log.txt", $"time taken: {timeTaken}\n");
             File.AppendAllText("log.txt", $"depth completed: {completedDepth}\n");
+            File.AppendAllText("log.txt", $"pre move neural network evaluation: {NeuralNetworkHandler.GetBoardValue(board) / 100d}\n");
+            File.AppendAllText("log.txt", $"pre move static evaluation: {board.GetBoardValue() * multiplier / 100d}\n");
             currentBestMove.MovePiece(board);
-            if (UseNeuralNetwork) File.AppendAllText("log.txt", $"board evaluation: {NeuralNetworkHandler.GetBoardValue(board) * multiplier / 100d}\n\n");
-            else File.AppendAllText("log.txt", $"board evaluation: {board.GetBoardValue() * multiplier / 100d}\n\n");
+            File.AppendAllText("log.txt", $"post move neural network evaluation: {NeuralNetworkHandler.GetBoardValue(board) / 100d}\n");
+            File.AppendAllText("log.txt", $"post move static evaluation: {board.GetBoardValue() * multiplier / 100d}\n\n");
             currentBestMove.ReverseMove(board);
         }
 
@@ -213,7 +215,7 @@ namespace NeuralChess.Engine
 
         private int QuiescenceSearch(Board board, int aiColour, int multiplier, int alpha, int beta)
         {
-            int standPat = (UseNeuralNetwork ? NeuralNetworkHandler.GetBoardValue(board) : board.GetBoardValue()) * multiplier;
+            int standPat = UseNeuralNetwork ? NeuralNetworkHandler.GetBoardValue(board) : board.GetBoardValue() * multiplier;
             bool isMaximising = (aiColour == board.ActiveColour);
 
             if (UseAlphaBeta)
