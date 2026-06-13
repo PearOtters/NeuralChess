@@ -373,6 +373,7 @@ env/
 *.pt
 *.pth
 *.onnx
+*.onnx.data
 stockfish.exe
 
 *.csv
