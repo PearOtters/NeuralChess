@@ -442,5 +442,31 @@ namespace NeuralChess.Engine
 
             return fen.ToString();
         }
+
+        public void CalculateBoardState(float[] boardState)
+        {
+            Array.Clear(boardState, 0, 832);
+            
+            for (int i = 0; i < 12; i++)
+            {
+                ulong pieces = Pieces[i];
+                while (pieces != 0)
+                {
+                    int square = BitOperations.TrailingZeroCount(pieces);
+
+                    boardState[(i * 64) + square] = 1f;
+
+                    pieces &= pieces - 1;
+                }
+            }
+
+            if (ActiveColour == Colour.Black)
+            {
+                for (int sq = 768; sq < 832; sq++)
+                {
+                    boardState[sq] = 1f;
+                }
+            }
+        }
     }
 }
