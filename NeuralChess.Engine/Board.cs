@@ -366,9 +366,9 @@ namespace NeuralChess.Engine
 
         public string ToFEN()
         {
-            StringBuilder fen = new StringBuilder();
+            StringBuilder fen = new();
 
-            char[] pieceChars = { 'P', 'N', 'B', 'R', 'Q', 'K', 'p', 'n', 'b', 'r', 'q', 'k' };
+            char[] pieceChars = ['P', 'N', 'B', 'R', 'Q', 'K', 'p', 'n', 'b', 'r', 'q', 'k'];
 
             for (int rank = 7; rank >= 0; rank--)
             {
