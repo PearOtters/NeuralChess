@@ -215,7 +215,14 @@ namespace NeuralChess.Engine
 
         private int QuiescenceSearch(Board board, int aiColour, int multiplier, int alpha, int beta)
         {
-            int standPat = UseNeuralNetwork ? NeuralNetworkHandler.GetBoardValue(board) : board.GetBoardValue() * multiplier;
+            int standPat;
+
+            if (UseNeuralNetwork)
+            {
+                int neuralNetworkScore = NeuralNetworkHandler.GetBoardValue(board);
+                standPat = (board.ActiveColour == aiColour) ? neuralNetworkScore : -neuralNetworkScore;
+            }
+            else standPat = board.GetBoardValue() * multiplier;
             bool isMaximising = (aiColour == board.ActiveColour);
 
             if (UseAlphaBeta)
