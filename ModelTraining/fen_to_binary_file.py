@@ -74,5 +74,4 @@ def create_packed_datasets(csv_filepath: str, output_folder: str, total_position
 
     print("Creation complete")
 
-create_packed_datasets("chess_dataset.csv", "dataset_chunks_100thou", 100_000, 10_000)
-create_packed_datasets("chess_dataset.csv", "dataset_chunks_5mil", 5_000_000)
+create_packed_datasets("chess_dataset.csv", "dataset_chunks", 94_165_435, 1_000_000)
