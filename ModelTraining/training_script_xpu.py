@@ -7,12 +7,14 @@ from model import ChessValueNet
 from dataset_manager import ChunkedChessDataset
 from datetime import datetime
 
-device = torch.device("xpu" if torch.xpu.is_available() else "cpu")
+GPU = "xpu"
+
+device = torch.device(GPU if torch.xpu.is_available() else "cpu")
 model = ChessValueNet().to(device)
 
 criterion = nn.MSELoss()
 optimizer = optim.Adam(model.parameters(), lr=0.001)
-scaler = GradScaler("xpu")
+scaler = GradScaler(GPU)
 
 dataset = ChunkedChessDataset(folder_path="./train_dataset_chunks")
 train_loader = DataLoader(dataset, batch_size=1024)
@@ -30,7 +32,7 @@ for epoch in range(1, 4):
 
         optimizer.zero_grad()
 
-        with autocast(device_type="xpu", dtype=torch.float16):
+        with autocast(device_type=GPU, dtype=torch.float16):
             predictions = model(batch_boards)
             loss = criterion(predictions, batch_scores)
 
