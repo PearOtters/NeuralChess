@@ -2,27 +2,32 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 import torch.optim as optim
+from torch.optim.lr_scheduler import CosineAnnealingLR
 from torch.amp import GradScaler, autocast
 from model import ChessValueNet
 from dataset_manager import ChunkedChessDataset
 from datetime import datetime
 
 GPU = "xpu"
+EPOCHS = 20
 
 device = torch.device(GPU if torch.xpu.is_available() else "cpu")
 model = ChessValueNet().to(device)
 
 criterion = nn.MSELoss()
-optimizer = optim.Adam(model.parameters(), lr=0.001)
+
+optimizer = optim.Adam(model.parameters(), lr=0.002)
+scheduler = CosineAnnealingLR(optimizer, T_max=EPOCHS, eta_min=1e-6)
+
 scaler = GradScaler(GPU)
 
 dataset = ChunkedChessDataset(folder_path="./train_dataset_chunks")
-train_loader = DataLoader(dataset, batch_size=1024)
+train_loader = DataLoader(dataset, batch_size=4096)
 
 model.train()
 print(f"Starting training loop on device: {device}")
 
-for epoch in range(1, 4):
+for epoch in range(1, EPOCHS + 1):
     running_loss = 0.0
     batch_count = 0
 
@@ -46,6 +51,7 @@ for epoch in range(1, 4):
         if batch_count % 500 == 0:
             print(f"Epoch {epoch} | Batch {batch_count} | Current Loss: {loss.item():.4f} | Time: {datetime.now()}")
 
+    scheduler.step()
     print(f"=== Epoch {epoch} Complete! Average Loss: {running_loss / batch_count:.4f} ===")
 
 torch.save(model.state_dict(), "chess_model_weights.pth")
