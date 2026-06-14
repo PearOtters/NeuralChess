@@ -35,7 +35,7 @@ with torch.no_grad():
         running_loss += loss.item()
         batch_count += 1
 
-        if batch_count % 50 == 0:
+        if batch_count % 500 == 0:
             print(f"Batch {batch_count} | Current Loss: {loss.item():.4f} | Time: {datetime.now()}")
 
 print(f"=== Training complete! Average Loss: {running_loss / batch_count:.4f} ===")

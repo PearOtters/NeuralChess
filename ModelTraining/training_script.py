@@ -43,7 +43,7 @@ for epoch in range(1, 4):
         running_loss += loss.item()
         batch_count += 1
 
-        if batch_count % 50 == 0:
+        if batch_count % 500 == 0:
             print(f"Epoch {epoch} | Batch {batch_count} | Current Loss: {loss.item():.4f} | Time: {datetime.now()}")
 
     print(f"=== Epoch {epoch} Complete! Average Loss: {running_loss / batch_count:.4f} ===")
