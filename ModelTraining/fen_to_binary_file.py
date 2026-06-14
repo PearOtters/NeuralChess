@@ -6,30 +6,45 @@ def parse_fen(fen: str) -> np.ndarray:
     piece_map = {"P":0, "N":1, "B":2, "R":3, "Q":4, "K":5,
               "p":6, "n":7, "b":8, "r":9, "q":10, "k":11}
     
-    board = np.zeros((13,64), dtype=np.bool_)
+    board = np.zeros((12,64), dtype=np.bool_)
 
     fen_parts = fen.split(' ')
     board_layout = fen_parts[0]
 
-    rank = 7
-    file = 0
+    is_white_turn = fen_parts[1] == 'w'
+
+    if is_white_turn:
+        rank = 7
+        file = 0
+    else:
+        rank = 0
+        file = 7
+
 
     for c in board_layout:
         if c == '/':
-            file = 0
-            rank -= 1
+            if is_white_turn:
+                file = 0
+                rank -= 1
+            else:
+                file = 7
+                rank += 1
+
         elif (c.isdigit()):
-            file += int(c)
+            if is_white_turn:
+                file += int(c)
+            else:
+                file -= int(c)
         else:
+            char_to_map = c if is_white_turn else c.swapcase()
             square_index = (rank * 8) + file
-            piece_type = piece_map[c]
+            piece_type = piece_map[char_to_map]
             
             board[piece_type, square_index] = True
-            file += 1
-
-    is_black_turn = fen_parts[1] == 'b'
-
-    board[12, :] = is_black_turn
+            if is_white_turn:
+                file += 1
+            else:
+                file -= 1
 
     return board
 
