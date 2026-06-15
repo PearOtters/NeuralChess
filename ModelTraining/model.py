@@ -6,7 +6,7 @@ class ChessValueNet(nn.Module):
         super().__init__()
         self.flatten = nn.Flatten()
         
-        self.layer1 = nn.Linear(13 * 64, 256)
+        self.layer1 = nn.Linear(12 * 64, 256)
         self.layer2 = nn.Linear(256, 32)
         self.output_layer = nn.Linear(32, 1)
 

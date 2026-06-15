@@ -33,7 +33,7 @@ for epoch in range(1, EPOCHS + 1):
 
     for batch_boards, batch_scores in train_loader:
         batch_boards = batch_boards.to(device)
-        batch_scores = batch_scores.to(device).float()
+        batch_scores = batch_scores.to(device).float().view(-1, 1)
 
         optimizer.zero_grad()
 

@@ -52,7 +52,7 @@ def create_packed_datasets(csv_filepath: str, output_folder: str, total_position
     
     os.makedirs(output_folder, exist_ok=True)
     
-    ram_buffer_boards = np.zeros((chunk_size, 13, 64), dtype=np.bool_)
+    ram_buffer_boards = np.zeros((chunk_size, 12, 64), dtype=np.bool_)
     ram_buffer_scores = np.zeros((chunk_size, 1), dtype=np.float32)
     
     buffer_index = 0
@@ -89,4 +89,4 @@ def create_packed_datasets(csv_filepath: str, output_folder: str, total_position
 
     print("Creation complete")
 
-create_packed_datasets("chess_dataset.csv", "train_dataset_chunks", 100_000_000, 1_000_000)
+create_packed_datasets("chess_dataset_small.csv", "validation_dataset_chunks", 100_000_000, 1_000_000)
