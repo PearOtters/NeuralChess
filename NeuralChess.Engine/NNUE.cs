@@ -82,6 +82,39 @@ namespace NeuralChess.Engine
             }
         }
 
+        public static void GenerateAccumulatorFromBoardd(Board board)
+        {
+            for (int v = 0; v < 16; v++)
+            {
+                WAccumulator[v] = B1[v];
+                BAccumulator[v] = B1[v];
+            }
+
+            for (int wPiece = 0; wPiece < 12; wPiece++)
+            {
+                ulong bitboard = board.Pieces[wPiece];
+
+                while (bitboard != 0)
+                {
+                    int wSquare = BitOperations.TrailingZeroCount(bitboard);
+
+                    int bSquare = wSquare ^ 63;
+                    int bPiece = (wPiece + 6) % 12;
+
+                    int wBaseIndex = (wPiece * 64 + wSquare) * 16;
+                    int bBaseIndex = (bPiece * 64 + bSquare) * 16;
+
+                    for (int v = 0; v < 16; v++)
+                    {
+                        WAccumulator[v] = Vector256.Add(WAccumulator[v], W1[wBaseIndex + v]);
+                        BAccumulator[v] = Vector256.Add(BAccumulator[v], W1[bBaseIndex + v]);
+                    }
+
+                    bitboard &= bitboard - 1;
+                }
+            }
+        }
+
         public static void UpdateAccumulator(Move move)
         {
 
