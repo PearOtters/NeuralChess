@@ -19,7 +19,7 @@ class ChunkedChessDataset(IterableDataset):
 
             raw_scores = data['scores']
             scaled_scores = (raw_scores / 100.0).astype(np.float32)
-            scaled_scores = np.clip(scaled_scores, 9.0, 9.0)
+            scaled_scores = np.clip(scaled_scores, -9.0, 9.0)
 
             unpacked_boards = np.unpackbits(packed_boards).reshape(-1, 12, 64).astype(np.float32)
 
