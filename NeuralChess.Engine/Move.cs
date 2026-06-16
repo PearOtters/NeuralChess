@@ -44,55 +44,87 @@ namespace NeuralChess.Engine
         {
             PrevCastleRights = board.CastleRights;
             PrevEnPassant = board.EnPassantSquare;
-
             board.EnPassantSquare = -1;
-            ulong clearMask = ~(1UL << ToSquare);
-            for (int i = 0; i < 12; i++)
-            {
-                if ((board.Pieces[i] & ~clearMask) != 0)
-                {
-                    board.Pieces[i] &= clearMask;
-                    CapturedPiece = i;
-                }
-            }
+            CapturedPiece = -1;
 
-            board.Pieces[SelectedPiece] ^= 1UL << FromSquare;
-            if (Special == SpecialMove.PROMOTION)
+            int movingColour = SelectedPiece < 6 ? Colour.White : Colour.Black;
+            int enemyColour = movingColour == Colour.White ? Colour.Black : Colour.White;
+
+            ulong fromMask = 1UL << FromSquare;
+            ulong toMask = 1UL << ToSquare;
+
+            if (Special != SpecialMove.EN_PASSANT && (board.AllPieces & toMask) != 0)
             {
-                board.Pieces[PromotionPiece] |= (1UL << ToSquare);
-            }
-            else
-            {
-                board.Pieces[SelectedPiece] |= (1UL << ToSquare);
+                int startIdx = movingColour == Colour.White ? 6 : 0;
+                int endIdx = movingColour == Colour.White ? 12 : 6;
+
+                for (int i = startIdx; i < endIdx; i++)
+                {
+                    if ((board.Pieces[i] & toMask) != 0)
+                    {
+                        board.Pieces[i] ^= toMask;
+                        CapturedPiece = i;
+                        break;
+                    }
+                }
+
+                board.Colours[enemyColour] ^= toMask;
+                board.AllPieces ^= toMask;
             }
 
             if (Special == SpecialMove.EN_PASSANT)
             {
                 int capturedPawnSquare = SelectedPiece == Piece.WhitePawn ? ToSquare - 8 : ToSquare + 8;
                 CapturedPiece = SelectedPiece == Piece.WhitePawn ? Piece.BlackPawn : Piece.WhitePawn;
-                board.Pieces[CapturedPiece] &= ~(1UL << capturedPawnSquare);
+                ulong epMask = 1UL << capturedPawnSquare;
+
+                board.Pieces[CapturedPiece] ^= epMask;
+                board.Colours[enemyColour] ^= epMask;
+                board.AllPieces ^= epMask;
             }
+
+            board.Pieces[SelectedPiece] ^= fromMask;
+            board.Colours[movingColour] ^= fromMask;
+            board.AllPieces ^= fromMask;
+
+            if (Special == SpecialMove.PROMOTION)
+            {
+                board.Pieces[PromotionPiece] ^= toMask;
+            }
+            else
+            {
+                board.Pieces[SelectedPiece] ^= toMask;
+            }
+            board.Colours[movingColour] ^= toMask;
+            board.AllPieces ^= toMask;
 
             if (Special == SpecialMove.CASTLE)
             {
                 int rookPiece = SelectedPiece - 2;
+                int rookFrom, rookTo;
+
                 if (ToSquare > FromSquare)
                 {
-                    board.Pieces[rookPiece] ^= 1UL << (ToSquare + 1);
-                    board.Pieces[rookPiece] |= 1UL << (ToSquare - 1);
+                    rookFrom = ToSquare + 1;
+                    rookTo = ToSquare - 1;
                 }
                 else
                 {
-                    board.Pieces[rookPiece] ^= 1UL << (ToSquare - 2);
-                    board.Pieces[rookPiece] |= 1UL << (ToSquare + 1);
+                    rookFrom = ToSquare - 2;
+                    rookTo = ToSquare + 1;
                 }
-            }
 
-            board.Colours[Colour.White] = board.Pieces[Piece.WhitePawn] | board.Pieces[Piece.WhiteKnight] | board.Pieces[Piece.WhiteBishop] |
-                board.Pieces[Piece.WhiteRook] | board.Pieces[Piece.WhiteQueen] | board.Pieces[Piece.WhiteKing];
-            board.Colours[Colour.Black] = board.Pieces[Piece.BlackPawn] | board.Pieces[Piece.BlackKnight] | board.Pieces[Piece.BlackBishop] |
-                board.Pieces[Piece.BlackRook] | board.Pieces[Piece.BlackQueen] | board.Pieces[Piece.BlackKing];
-            board.AllPieces = board.Colours[Colour.White] | board.Colours[Colour.Black];
+                ulong rookFromMask = 1UL << rookFrom;
+                ulong rookToMask = 1UL << rookTo;
+
+                board.Pieces[rookPiece] ^= rookFromMask;
+                board.Colours[movingColour] ^= rookFromMask;
+                board.AllPieces ^= rookFromMask;
+
+                board.Pieces[rookPiece] ^= rookToMask;
+                board.Colours[movingColour] ^= rookToMask;
+                board.AllPieces ^= rookToMask;
+            }
 
             if (SelectedPiece == Piece.WhiteKing) board.CastleRights &= ~(CastlingRights.WK | CastlingRights.WQ);
             if (SelectedPiece == Piece.BlackKing) board.CastleRights &= ~(CastlingRights.BK | CastlingRights.BQ);
@@ -114,49 +146,68 @@ namespace NeuralChess.Engine
 
         public void ReverseMove(Board board)
         {
+            int movingColour = SelectedPiece < 6 ? Colour.White : Colour.Black;
+
             if (CapturedPiece != -1)
             {
+                int capturedColour = CapturedPiece < 6 ? Colour.White : Colour.Black;
+                int capturedSquare = ToSquare;
+
                 if (Special == SpecialMove.EN_PASSANT)
                 {
-                    int capturedPawnSquare = SelectedPiece == Piece.WhitePawn ? ToSquare - 8 : ToSquare + 8;
-                    board.Pieces[CapturedPiece] |= 1UL << capturedPawnSquare;
+                    capturedSquare = SelectedPiece == Piece.WhitePawn ? ToSquare - 8 : ToSquare + 8;
                 }
-                else
-                {
-                    board.Pieces[CapturedPiece] |= 1UL << ToSquare;
-                }
+
+                ulong capturedMask = 1UL << capturedSquare;
+                board.Pieces[CapturedPiece] |= capturedMask;
+                board.Colours[capturedColour] |= capturedMask;
+                board.AllPieces |= capturedMask;
             }
 
-            board.Pieces[SelectedPiece] |= 1UL << FromSquare;
+            ulong fromMask = 1UL << FromSquare;
+            board.Pieces[SelectedPiece] |= fromMask;
+            board.Colours[movingColour] |= fromMask;
+            board.AllPieces |= fromMask;
+
+            ulong toMask = 1UL << ToSquare;
             if (Special == SpecialMove.PROMOTION)
             {
-                board.Pieces[PromotionPiece] ^= 1UL << ToSquare;
+                board.Pieces[PromotionPiece] ^= toMask;
             }
             else
             {
-                board.Pieces[SelectedPiece] ^= 1UL << ToSquare;
+                board.Pieces[SelectedPiece] ^= toMask;
             }
+            board.Colours[movingColour] ^= toMask;
+            board.AllPieces ^= toMask;
 
             if (Special == SpecialMove.CASTLE)
             {
                 int rookPiece = SelectedPiece - 2;
+                int rookTo, rookFrom;
+
                 if (ToSquare > FromSquare)
                 {
-                    board.Pieces[rookPiece] ^= 1UL << (ToSquare - 1);
-                    board.Pieces[rookPiece] |= 1UL << (ToSquare + 1);
+                    rookTo = ToSquare - 1;
+                    rookFrom = ToSquare + 1;
                 }
                 else
                 {
-                    board.Pieces[rookPiece] ^= 1UL << (ToSquare + 1);
-                    board.Pieces[rookPiece] |= 1UL << (ToSquare - 2);
+                    rookTo = ToSquare + 1;
+                    rookFrom = ToSquare - 2;
                 }
-            }
 
-            board.Colours[Colour.White] = board.Pieces[Piece.WhitePawn] | board.Pieces[Piece.WhiteKnight] | board.Pieces[Piece.WhiteBishop] |
-                board.Pieces[Piece.WhiteRook] | board.Pieces[Piece.WhiteQueen] | board.Pieces[Piece.WhiteKing];
-            board.Colours[Colour.Black] = board.Pieces[Piece.BlackPawn] | board.Pieces[Piece.BlackKnight] | board.Pieces[Piece.BlackBishop] |
-                board.Pieces[Piece.BlackRook] | board.Pieces[Piece.BlackQueen] | board.Pieces[Piece.BlackKing];
-            board.AllPieces = board.Colours[Colour.White] | board.Colours[Colour.Black];
+                ulong rookToMask = 1UL << rookTo;
+                ulong rookFromMask = 1UL << rookFrom;
+
+                board.Pieces[rookPiece] ^= rookToMask;
+                board.Colours[movingColour] ^= rookToMask;
+                board.AllPieces ^= rookToMask;
+
+                board.Pieces[rookPiece] |= rookFromMask;
+                board.Colours[movingColour] |= rookFromMask;
+                board.AllPieces |= rookFromMask;
+            }
 
             board.CastleRights = PrevCastleRights;
             board.EnPassantSquare = PrevEnPassant;
