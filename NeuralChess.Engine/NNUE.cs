@@ -58,7 +58,46 @@ namespace NeuralChess.Engine
 
         public static void UpdateAccumulator(Move move)
         {
+            int wFromSquare = move.FromSquare;
+            int wToSquare = move.ToSquare;
 
+            int bFromSquare = wFromSquare ^ 63;
+            int bToSquare = wToSquare ^ 63;
+
+            int wPiece = move.SelectedPiece;
+            int wPromotion = move.PromotionPiece;
+
+            int bPiece = (wPiece + 6) % 12;
+            int bPromotion = (wPromotion + 6) % 12;
+
+            int wFromIndex = (wPiece * 64 + wFromSquare) * 16;
+            int wToIndex = ((wPromotion != -1 ? wPromotion : wPiece) * 64 + wToSquare) * 16;
+
+            int bFromIndex = (bPiece * 64 + bFromSquare) * 16;
+            int bToIndex = ((bPromotion != -1 ? bPromotion : bPiece) * 64 + bToSquare) * 16;
+
+            if (move.CapturedPiece != -1)
+            {
+                int bCaptured = move.CapturedPiece;
+                int wCaptured = (bCaptured + 6) % 12;
+
+                int bCapturedIndex = (bCaptured * 64 + wToSquare) * 16;
+                int wCapturedIndex = (wCaptured * 64 + bToSquare) * 16;
+
+                for (int v = 0; v < 16; v++)
+                {
+                    WAccumulator[v] = Vector256.Add(Vector256.Subtract(Vector256.Subtract(WAccumulator[v], W1[bCapturedIndex + v]), W1[wFromIndex + v]), W1[wToIndex + v]);
+                    BAccumulator[v] = Vector256.Add(Vector256.Subtract(Vector256.Subtract(BAccumulator[v], W1[wCapturedIndex + v]), W1[bFromIndex + v]), W1[bToIndex + v]);
+                }
+            }
+            else
+            {
+                for (int v = 0; v < 16; v++)
+                {
+                    WAccumulator[v] = Vector256.Add(Vector256.Subtract(WAccumulator[v], W1[wFromIndex + v]), W1[wToIndex + v]);
+                    BAccumulator[v] = Vector256.Add(Vector256.Subtract(BAccumulator[v], W1[bFromIndex + v]), W1[bToIndex + v]);
+                }
+            }
         }
     }
 }
