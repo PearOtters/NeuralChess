@@ -379,4 +379,5 @@ stockfish.exe
 
 *.csv
 *.npz
-ModelTraining/corrupt_lines_report.txt
+corrupt_lines_report.txt
+batch_results.txt
