@@ -26,6 +26,7 @@ namespace NeuralChess.Engine
                 }
                 else if (command == "isready")
                 {
+                    NNUE.Initialise();
                     Console.WriteLine("readyok");
                 }
                 else if (command == "position")
@@ -56,7 +57,7 @@ namespace NeuralChess.Engine
                 }
                 else if (command == "quit")
                 {
-                    System.Environment.Exit(1);
+                    break;
                 }
             }
         }

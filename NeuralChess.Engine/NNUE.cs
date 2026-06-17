@@ -81,6 +81,11 @@ namespace NeuralChess.Engine
             }
         }
 
+        public static void Initialise()
+        {
+            return;
+        }
+
         public static void GenerateAccumulatorFromBoard(Board board)
         {
             for (int v = 0; v < 16; v++)
