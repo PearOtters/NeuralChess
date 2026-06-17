@@ -13,8 +13,10 @@ namespace NeuralChess.Engine
     {
         private static readonly Vector256<short>[] W1 = new Vector256<short>[12_288];
         private static readonly Vector256<short>[] B1 = new Vector256<short>[16];
+
         private static readonly Vector256<sbyte>[] W2 = new Vector256<sbyte>[256];
         private static readonly int[] B2 = new int[32];
+
         private static readonly sbyte[] W3 = new sbyte[32];
         private static readonly int B3;
 
