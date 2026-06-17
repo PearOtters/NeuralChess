@@ -10,6 +10,10 @@ class ChessValueNet(nn.Module):
         self.layer2 = nn.Linear(256, 32)
         self.output_layer = nn.Linear(32, 1)
 
+        nn.init.zeros_(self.layer1.bias)
+        nn.init.zeros_(self.layer2.bias)
+        nn.init.zeros_(self.output_layer.bias)
+
     def forward(self, x):
         x = self.flatten(x)
         
