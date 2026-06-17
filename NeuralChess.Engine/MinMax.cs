@@ -20,6 +20,8 @@ namespace NeuralChess.Engine
         {
             Stopwatch searchTimer = Stopwatch.StartNew();
 
+            if (UseNeuralNetwork) NNUE.GenerateAccumulatorFromBoard(board);
+
             List<Move> pseudoLegalMoves = MoveGenerator.GenerateAllMoves(board);
             if (UseAlphaBeta) OrderMoves(pseudoLegalMoves, board);
 
@@ -73,12 +75,14 @@ namespace NeuralChess.Engine
                     }
 
                     move.MovePiece(board);
+                    NNUE.UpdateAccumulator(move);
                     board.ActiveColour ^= 1;
 
                     int moveValue = RecursiveMinMaxed(board, depth - 1, aiColour, multiplier, alpha, beta);
 
                     board.ActiveColour ^= 1;
                     move.ReverseMove(board);
+                    NNUE.ReverseAccumulator(move);
 
                     if (moveValue > bestGain)
                     {
@@ -100,17 +104,26 @@ namespace NeuralChess.Engine
                     completedDepth = depth;
                 }
             }
+            if (currentBestMove == null)
+            {
+                Console.WriteLine("bestmove (none)");
+                return;
+            }
             Console.WriteLine($"bestmove {currentBestMove.ToUCI()}");
 
             double timeTaken = searchTimer.ElapsedMilliseconds / 1000d;
             File.AppendAllText("log.txt", $"time taken: {timeTaken}\n");
             File.AppendAllText("log.txt", $"depth completed: {completedDepth}\n");
+            File.AppendAllText("log.txt", $"pre move NNUE evaluation: {NNUE.GetBoardValue(aiColour) / 100d}\n");
             File.AppendAllText("log.txt", $"pre move neural network evaluation: {NeuralNetworkHandler.GetBoardValue(board) / 100d}\n");
             File.AppendAllText("log.txt", $"pre move static evaluation: {board.GetBoardValue() * multiplier / 100d}\n");
             currentBestMove.MovePiece(board);
+            NNUE.UpdateAccumulator(currentBestMove);
+            File.AppendAllText("log.txt", $"post move NNUE evaluation: {NNUE.GetBoardValue(aiColour) / 100d}\n");
             File.AppendAllText("log.txt", $"post move neural network evaluation: {NeuralNetworkHandler.GetBoardValue(board) / 100d}\n");
             File.AppendAllText("log.txt", $"post move static evaluation: {board.GetBoardValue() * multiplier / 100d}\n\n");
             currentBestMove.ReverseMove(board);
+            NNUE.ReverseAccumulator(currentBestMove);
         }
 
         private int RecursiveMinMaxed(Board board, int depth, int aiColour, int multiplier, int alpha, int beta)
@@ -136,12 +149,14 @@ namespace NeuralChess.Engine
                     legalMoves.Add(move);
 
                     move.MovePiece(board);
+                    NNUE.UpdateAccumulator(move);
                     board.ActiveColour ^= 1;
 
                     int moveValue = RecursiveMinMaxed(board, depth - 1, aiColour, multiplier, alpha, beta);
 
                     board.ActiveColour ^= 1;
                     move.ReverseMove(board);
+                    NNUE.ReverseAccumulator(move);
 
                     if (isMaximising)
                     {
@@ -219,8 +234,7 @@ namespace NeuralChess.Engine
 
             if (UseNeuralNetwork)
             {
-                int neuralNetworkScore = NeuralNetworkHandler.GetBoardValue(board);
-                standPat = (board.ActiveColour == aiColour) ? neuralNetworkScore : -neuralNetworkScore;
+                standPat = NNUE.GetBoardValue(aiColour);
             }
             else standPat = board.GetBoardValue() * multiplier;
             bool isMaximising = (aiColour == board.ActiveColour);
@@ -250,12 +264,14 @@ namespace NeuralChess.Engine
                 if (move.IsLegal(board))
                 {
                     move.MovePiece(board);
+                    NNUE.UpdateAccumulator(move);
                     board.ActiveColour ^= 1;
 
                     int moveValue = QuiescenceSearch(board, aiColour, multiplier, alpha, beta);
 
                     board.ActiveColour ^= 1;
                     move.ReverseMove(board);
+                    NNUE.ReverseAccumulator(move);
 
                     if (isMaximising)
                     {
