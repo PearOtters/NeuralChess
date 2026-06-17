@@ -47,8 +47,7 @@ def export_to_binary(model_path, output_path):
     w3_quantised = np.clip(np.round(w3_floats * OUT_SCALE), -128, 127).astype(np.int8)
     
     b3_floats = model.output_layer.bias.data.numpy()
-    # Output bias needs to account for the accumulator scales
-    b3_quantised = np.clip(np.round(b3_floats * L1_SCALE * L2_SCALE * OUT_SCALE), -2147483648, 2147483647).astype(np.int32)
+    b3_quantised = np.clip(p.round(b3_floats * L1_SCALE * L2_SCALE * OUT_SCALE), -2147483648, 2147483647).astype(np.int32)
 
     print(f"Writing binary data to {output_path}...")
     with open(output_path, "wb") as f:
@@ -60,5 +59,4 @@ def export_to_binary(model_path, output_path):
 
     print("Export complete! Your engine is ready to load the binary.")
 
-if __name__ == "__main__":
-    export_to_binary("chess_model_weights.pth", "nnue_network.bin")
+export_to_binary("chess_model_weights.pth", "nnue_network.bin")
