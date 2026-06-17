@@ -27,8 +27,7 @@ namespace NeuralChess.Engine
 
             float output = GetNeuralNetworkOutput();
 
-            output = Math.Clamp(output, -0.99999f, 0.99999f);
-            return (int)Math.Round(Math.Atanh(output) * 400);
+            return (int)output * 100;
         }
 
         public static float GetNeuralNetworkOutput()
