@@ -245,5 +245,10 @@ namespace NeuralChess.Engine
                 }
             }
         }
+
+        public static int GetBoardValue()
+        {
+            return 0;
+        }
     }
 }
