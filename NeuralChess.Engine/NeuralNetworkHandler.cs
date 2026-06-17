@@ -27,7 +27,7 @@ namespace NeuralChess.Engine
 
             float output = GetNeuralNetworkOutput();
 
-            return (int)output * 100;
+            return (int)(output * 100);
         }
 
         public static float GetNeuralNetworkOutput()
