@@ -29,6 +29,58 @@ namespace NeuralChess.Engine
 
         static NNUE()
         {
+            byte[] rawBytes = File.ReadAllBytes("nnue_network.bin");
+
+            if (rawBytes.Length != 402_084)
+            {
+                throw new Exception($"Invalid NNUE file size. Expected 402,084 bytes but found {rawBytes.Length}.");
+            }
+
+            int offset = 0;
+
+            unsafe
+            {
+                fixed (byte* ptr = rawBytes)
+                {
+                    short* w1Ptr = (short*)(ptr + offset);
+                    for (int i = 0; i < 12_288; i++)
+                    {
+                        W1[i] = Vector256.Load(w1Ptr + (i * 16));
+                    }
+                    offset += 393_216;
+
+                    short* b1Ptr = (short*)(ptr + offset);
+                    for (int i = 0; i < 16; i++)
+                    {
+                        B1[i] = Vector256.Load(b1Ptr + (i * 16));
+                    }
+                    offset += 512;
+
+                    int* b2Ptr = (int*)(ptr + offset);
+                    for (int i = 0; i < 32; i++)
+                    {
+                        B2[i] = b2Ptr[i];
+                    }
+                    offset += 128;
+
+                    sbyte* w2Ptr = (sbyte*)(ptr + offset);
+                    for (int i = 0; i < 256; i++)
+                    {
+                        W2[i] = Vector256.Load(w2Ptr + (i * 32));
+                    }
+                    offset += 8_192;
+
+                    int* b3Ptr = (int*)(ptr + offset);
+                    B3 = b3Ptr[0];
+                    offset += 4;
+
+                    sbyte* w3Ptr = (sbyte*)(ptr + offset);
+                    for (int i = 0; i < 32; i++)
+                    {
+                        W3[i] = w3Ptr[i];
+                    }
+                }
+            }
         }
 
         public static void GenerateAccumulatorFromBoard(Board board)
