@@ -31,6 +31,8 @@ def export_to_binary(model_path, output_path):
     L2_SCALE = 127.0
     OUT_SCALE = 127.0
 
+    L2_CSHARP_SHIFT_DIVISOR = 128.0
+
     print("Extracting and Quantising Layer 1 (Weights)...")
     w1_floats = model.layer1.weight.data.numpy().T
     w1_quantised = np.clip(np.round(w1_floats * L1_SCALE), -32768, 32767).astype(np.int16)
@@ -47,7 +49,8 @@ def export_to_binary(model_path, output_path):
     w3_quantised = np.clip(np.round(w3_floats * OUT_SCALE), -128, 127).astype(np.int8)
     
     b3_floats = model.output_layer.bias.data.numpy()
-    b3_quantised = np.clip(p.round(b3_floats * L1_SCALE * L2_SCALE * OUT_SCALE), -2147483648, 2147483647).astype(np.int32)
+    B3_SCALE = (L1_SCALE * L2_SCALE / L2_CSHARP_SHIFT_DIVISOR) * OUT_SCALE
+    b3_quantised = np.clip(np.round(b3_floats * B3_SCALE), -2147483648, 2147483647).astype(np.int32)
 
     print(f"Writing binary data to {output_path}...")
     with open(output_path, "wb") as f:

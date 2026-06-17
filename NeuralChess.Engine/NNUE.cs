@@ -276,7 +276,7 @@ namespace NeuralChess.Engine
 
             int runningScaledTotal = 0;
             int shift = 7;
-            int finalScale = 1 << shift;
+            int finalScale = 160;
 
             for (int n = 0; n < 32; n++)
             {
