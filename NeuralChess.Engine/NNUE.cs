@@ -6,6 +6,9 @@ namespace NeuralChess.Engine
 {
     public static class NNUE
     {
+        // Note to later:
+        // Unless switching to NEGAMAX for simplicity later on W and B Accumulators can be simplified into one as only one perspective is needed
+
         private static readonly Vector256<short>[] W1 = new Vector256<short>[12_288];
         private static readonly Vector256<short>[] B1 = new Vector256<short>[16];
 
