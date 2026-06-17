@@ -6,7 +6,7 @@ model.load_state_dict(torch.load("chess_model_weights.pth", map_location="cpu", 
 
 model.eval()
 
-dummy_input = torch.randn(1, 13, 64, dtype=torch.float32)
+dummy_input = torch.randn(1, 12, 64, dtype=torch.float32)
 
 torch.onnx.export(
     model,
