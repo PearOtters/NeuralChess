@@ -19,11 +19,11 @@ namespace NeuralChess.Engine
         private static readonly ThreadLocal<List<NamedOnnxValue>> threadLocalInputs =
             new(() => [NamedOnnxValue.CreateFromTensor("board_input", threadLocalInputTensor.Value)]);
 
-        public static int GetBoardValue(Board board)
+        public static int GetBoardValue(Board board, int colour)
         {
             float[]? currentBuffer = threadLocalBoardState.Value;
             if (currentBuffer == null) return 0;
-            board.CalculateBoardState(currentBuffer);
+            board.CalculateBoardState(currentBuffer, colour);
 
             float output = GetNeuralNetworkOutput();
 

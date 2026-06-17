@@ -115,12 +115,12 @@ namespace NeuralChess.Engine
             File.AppendAllText("log.txt", $"time taken: {timeTaken}\n");
             File.AppendAllText("log.txt", $"depth completed: {completedDepth}\n");
             if (UseNNUE) File.AppendAllText("log.txt", $"pre move NNUE evaluation: {NNUE.GetBoardValue(aiColour) / 100d}\n");
-            File.AppendAllText("log.txt", $"pre move neural network evaluation: {NeuralNetworkHandler.GetBoardValue(board) / 100d}\n");
+            File.AppendAllText("log.txt", $"pre move neural network evaluation: {NeuralNetworkHandler.GetBoardValue(board, aiColour) / 100d}\n");
             File.AppendAllText("log.txt", $"pre move static evaluation: {board.GetBoardValue() * multiplier / 100d}\n");
             currentBestMove.MovePiece(board);
             if (UseNNUE) NNUE.UpdateAccumulator(currentBestMove);
             if (UseNNUE) File.AppendAllText("log.txt", $"post move NNUE evaluation: {NNUE.GetBoardValue(aiColour) / 100d}\n");
-            File.AppendAllText("log.txt", $"post move neural network evaluation: {NeuralNetworkHandler.GetBoardValue(board) / 100d}\n");
+            File.AppendAllText("log.txt", $"post move neural network evaluation: {NeuralNetworkHandler.GetBoardValue(board, aiColour) / 100d}\n");
             File.AppendAllText("log.txt", $"post move static evaluation: {board.GetBoardValue() * multiplier / 100d}\n\n");
             currentBestMove.ReverseMove(board);
             if (UseNNUE) NNUE.ReverseAccumulator(currentBestMove);
