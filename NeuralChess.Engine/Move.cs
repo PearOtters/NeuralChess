@@ -148,22 +148,6 @@ namespace NeuralChess.Engine
         {
             int movingColour = SelectedPiece < 6 ? Colour.White : Colour.Black;
 
-            if (CapturedPiece != -1)
-            {
-                int capturedColour = CapturedPiece < 6 ? Colour.White : Colour.Black;
-                int capturedSquare = ToSquare;
-
-                if (Special == SpecialMove.EN_PASSANT)
-                {
-                    capturedSquare = SelectedPiece == Piece.WhitePawn ? ToSquare - 8 : ToSquare + 8;
-                }
-
-                ulong capturedMask = 1UL << capturedSquare;
-                board.Pieces[CapturedPiece] |= capturedMask;
-                board.Colours[capturedColour] |= capturedMask;
-                board.AllPieces |= capturedMask;
-            }
-
             ulong fromMask = 1UL << FromSquare;
             board.Pieces[SelectedPiece] |= fromMask;
             board.Colours[movingColour] |= fromMask;
@@ -180,6 +164,22 @@ namespace NeuralChess.Engine
             }
             board.Colours[movingColour] ^= toMask;
             board.AllPieces ^= toMask;
+
+            if (CapturedPiece != -1)
+            {
+                int capturedColour = CapturedPiece < 6 ? Colour.White : Colour.Black;
+                int capturedSquare = ToSquare;
+
+                if (Special == SpecialMove.EN_PASSANT)
+                {
+                    capturedSquare = SelectedPiece == Piece.WhitePawn ? ToSquare - 8 : ToSquare + 8;
+                }
+
+                ulong capturedMask = 1UL << capturedSquare;
+                board.Pieces[CapturedPiece] |= capturedMask;
+                board.Colours[capturedColour] |= capturedMask;
+                board.AllPieces |= capturedMask;
+            }
 
             if (Special == SpecialMove.CASTLE)
             {
