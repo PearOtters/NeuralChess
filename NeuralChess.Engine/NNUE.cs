@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Drawing;
 using System.Numerics;
 using System.Runtime.Intrinsics;
+using System.Runtime.Intrinsics.X86;
 using System.Text;
 
 namespace NeuralChess.Engine
@@ -12,12 +14,16 @@ namespace NeuralChess.Engine
         private static readonly Vector256<short>[] W1 = new Vector256<short>[12_288];
         private static readonly Vector256<short>[] B1 = new Vector256<short>[16];
         private static readonly Vector256<sbyte>[] W2 = new Vector256<sbyte>[256];
-        private static readonly Vector256<int>[] B2 = new Vector256<int>[4];
-        private static readonly Vector256<sbyte> W3;
+        private static readonly int[] B2 = new int[32];
+        private static readonly sbyte[] W3 = new sbyte[32];
         private static readonly int B3;
 
         private static readonly Vector256<short>[] WAccumulator = new Vector256<short>[16];
         private static readonly Vector256<short>[] BAccumulator = new Vector256<short>[16];
+
+        private static readonly Vector256<short> LowerBound = Vector256<short>.Zero;
+        private static readonly Vector256<short> UpperBound = Vector256<short>.One * 127;
+        private static readonly Vector256<short> Ones = Vector256<short>.One;
 
         static NNUE()
         {
@@ -246,9 +252,54 @@ namespace NeuralChess.Engine
             }
         }
 
-        public static int GetBoardValue()
+        public static int GetBoardValue(int colour)
         {
-            return 0;
+            Span<Vector256<byte>> ClampedAccumulator = stackalloc Vector256<byte>[8];
+
+            if (colour == Colour.White)
+            {
+                for (int v = 0; v < 8; v++)
+                {
+                    ClampedAccumulator[v] = Avx2.PackUnsignedSaturate(Vector256.Clamp(WAccumulator[v * 2], UpperBound, LowerBound), Vector256.Clamp(WAccumulator[v * 2 + 1], UpperBound, LowerBound));
+                }
+            }
+            else
+            {
+                for (int v = 0; v < 8; v++)
+                {
+                    ClampedAccumulator[v] = Avx2.PackUnsignedSaturate(Vector256.Clamp(BAccumulator[v * 2], UpperBound, LowerBound), Vector256.Clamp(BAccumulator[v * 2 + 1], UpperBound, LowerBound));
+                }
+            }
+
+
+            int weightIndex = 0;
+
+            int runningScaledTotal = 0;
+            int shift = 7;
+            int finalScale = 1 << shift;
+
+            for (int n = 0; n < 32; n++)
+            {
+                Vector256<int> nodeSum = Vector256<int>.Zero;
+
+                for (int i = 0; i < 8; i++)
+                {
+                    Vector256<byte> inputs = ClampedAccumulator[i];
+                    Vector256<sbyte> weights = W2[weightIndex++];
+
+                    Vector256<short> mult16 = Avx2.MultiplyAddAdjacent(inputs, weights);
+                    Vector256<int> mult32 = Avx2.MultiplyAddAdjacent(mult16, Ones);
+
+                    nodeSum = Avx2.Add(nodeSum, mult32);
+                }
+
+                int currentSum = Vector256.Sum(nodeSum) + B2[n];
+                sbyte clampedSum = (sbyte)int.Clamp(currentSum >> shift, 0, 127);
+
+                runningScaledTotal += clampedSum * W3[n];
+            }
+
+            return (B3 + runningScaledTotal) / finalScale;
         }
     }
 }
