@@ -445,7 +445,7 @@ namespace NeuralChess.Engine
 
         public void CalculateBoardState(float[] boardState)
         {
-            Array.Clear(boardState, 0, 832);
+            Array.Clear(boardState, 0, 768);
             
             for (int i = 0; i < 12; i++)
             {
@@ -457,14 +457,6 @@ namespace NeuralChess.Engine
                     boardState[(i * 64) + square] = 1f;
 
                     pieces &= pieces - 1;
-                }
-            }
-
-            if (ActiveColour == Colour.Black)
-            {
-                for (int sq = 768; sq < 832; sq++)
-                {
-                    boardState[sq] = 1f;
                 }
             }
         }

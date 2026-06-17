@@ -11,10 +11,10 @@ namespace NeuralChess.Engine
         private static readonly InferenceSession session = new("ChessValueNet.onnx");
 
         private static readonly ThreadLocal<float[]> threadLocalBoardState =
-            new(() => new float[832]);
+            new(() => new float[768]);
 
         private static readonly ThreadLocal<DenseTensor<float>> threadLocalInputTensor =
-            new(() => new DenseTensor<float>(threadLocalBoardState.Value, [1, 13, 64]));
+            new(() => new DenseTensor<float>(threadLocalBoardState.Value, [1, 12, 64]));
 
         private static readonly ThreadLocal<List<NamedOnnxValue>> threadLocalInputs =
             new(() => [NamedOnnxValue.CreateFromTensor("board_input", threadLocalInputTensor.Value)]);
