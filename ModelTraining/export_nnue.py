@@ -37,6 +37,9 @@ def export_to_binary(model_path, output_path):
     w1_floats = model.layer1.weight.data.numpy().T
     w1_quantised = np.clip(np.round(w1_floats * L1_SCALE), -32768, 32767).astype(np.int16)
 
+    b1_floats = model.layer1.bias.data.numpy()
+    b1_quantised = np.clip(np.round(b1_floats * L1_SCALE), -32768, 32767).astype(np.int16)
+
     print("Extracting, Scrambling, and Quantising Layer 2 (Weights & Biases)...")
     w2_scrambled = scramble_w2_weights(model.layer2.weight.data)
     w2_quantised = np.clip(np.round(w2_scrambled.numpy() * L2_SCALE), -128, 127).astype(np.int8)
@@ -55,6 +58,7 @@ def export_to_binary(model_path, output_path):
     print(f"Writing binary data to {output_path}...")
     with open(output_path, "wb") as f:
         f.write(w1_quantised.tobytes())
+        f.write(b1_quantised.tobytes())
         f.write(b2_quantised.tobytes())
         f.write(w2_quantised.tobytes())
         f.write(b3_quantised.tobytes())
