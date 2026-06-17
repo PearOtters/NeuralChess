@@ -5,7 +5,7 @@ using System.Text;
 
 namespace NeuralChess.Engine
 {
-    public class AlphaBeta(int MaxDepth, bool UseNeuralNetwork = true) : MinMax(MaxDepth, true, UseNeuralNetwork)
+    public class AlphaBeta(int MaxDepth, bool UseNNUE = true) : MinMax(MaxDepth, true, UseNNUE)
     {
     }
 }

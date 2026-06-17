@@ -7,7 +7,7 @@ using System.IO;
 
 namespace NeuralChess.Engine
 {
-    public class MinMax(int MaxDepth, bool UseAlphaBeta = false, bool UseNeuralNetwork = true) : Engine($"{(UseAlphaBeta ? "AlphaBeta" : "MinMax")} {(UseNeuralNetwork ? "Neural Network" : "")} Def {MaxDepth}")
+    public class MinMax(int MaxDepth, bool UseAlphaBeta = false, bool UseNNUE = true) : Engine($"{(UseAlphaBeta ? "AlphaBeta" : "MinMax")} {(UseNNUE ? "NNUE" : "")} Def {MaxDepth}")
     {
         private const int CheckmateScore = 1000000;
         private static readonly int[] MVV_LVA_Values =
@@ -20,7 +20,7 @@ namespace NeuralChess.Engine
         {
             Stopwatch searchTimer = Stopwatch.StartNew();
 
-            if (UseNeuralNetwork) NNUE.GenerateAccumulatorFromBoard(board);
+            if (UseNNUE) NNUE.GenerateAccumulatorFromBoard(board);
 
             List<Move> pseudoLegalMoves = MoveGenerator.GenerateAllMoves(board);
             if (UseAlphaBeta) OrderMoves(pseudoLegalMoves, board);
@@ -75,14 +75,14 @@ namespace NeuralChess.Engine
                     }
 
                     move.MovePiece(board);
-                    NNUE.UpdateAccumulator(move);
+                    if (UseNNUE) NNUE.UpdateAccumulator(move);
                     board.ActiveColour ^= 1;
 
                     int moveValue = RecursiveMinMaxed(board, depth - 1, aiColour, multiplier, alpha, beta);
 
                     board.ActiveColour ^= 1;
                     move.ReverseMove(board);
-                    NNUE.ReverseAccumulator(move);
+                    if (UseNNUE) NNUE.ReverseAccumulator(move);
 
                     if (moveValue > bestGain)
                     {
@@ -114,16 +114,16 @@ namespace NeuralChess.Engine
             double timeTaken = searchTimer.ElapsedMilliseconds / 1000d;
             File.AppendAllText("log.txt", $"time taken: {timeTaken}\n");
             File.AppendAllText("log.txt", $"depth completed: {completedDepth}\n");
-            File.AppendAllText("log.txt", $"pre move NNUE evaluation: {NNUE.GetBoardValue(aiColour) / 100d}\n");
+            if (UseNNUE) File.AppendAllText("log.txt", $"pre move NNUE evaluation: {NNUE.GetBoardValue(aiColour) / 100d}\n");
             File.AppendAllText("log.txt", $"pre move neural network evaluation: {NeuralNetworkHandler.GetBoardValue(board) / 100d}\n");
             File.AppendAllText("log.txt", $"pre move static evaluation: {board.GetBoardValue() * multiplier / 100d}\n");
             currentBestMove.MovePiece(board);
-            NNUE.UpdateAccumulator(currentBestMove);
-            File.AppendAllText("log.txt", $"post move NNUE evaluation: {NNUE.GetBoardValue(aiColour) / 100d}\n");
+            if (UseNNUE) NNUE.UpdateAccumulator(currentBestMove);
+            if (UseNNUE) File.AppendAllText("log.txt", $"post move NNUE evaluation: {NNUE.GetBoardValue(aiColour) / 100d}\n");
             File.AppendAllText("log.txt", $"post move neural network evaluation: {NeuralNetworkHandler.GetBoardValue(board) / 100d}\n");
             File.AppendAllText("log.txt", $"post move static evaluation: {board.GetBoardValue() * multiplier / 100d}\n\n");
             currentBestMove.ReverseMove(board);
-            NNUE.ReverseAccumulator(currentBestMove);
+            if (UseNNUE) NNUE.ReverseAccumulator(currentBestMove);
         }
 
         private int RecursiveMinMaxed(Board board, int depth, int aiColour, int multiplier, int alpha, int beta)
@@ -149,14 +149,14 @@ namespace NeuralChess.Engine
                     legalMoves.Add(move);
 
                     move.MovePiece(board);
-                    NNUE.UpdateAccumulator(move);
+                    if (UseNNUE) NNUE.UpdateAccumulator(move);
                     board.ActiveColour ^= 1;
 
                     int moveValue = RecursiveMinMaxed(board, depth - 1, aiColour, multiplier, alpha, beta);
 
                     board.ActiveColour ^= 1;
                     move.ReverseMove(board);
-                    NNUE.ReverseAccumulator(move);
+                    if (UseNNUE) NNUE.ReverseAccumulator(move);
 
                     if (isMaximising)
                     {
@@ -232,7 +232,7 @@ namespace NeuralChess.Engine
         {
             int standPat;
 
-            if (UseNeuralNetwork)
+            if (UseNNUE)
             {
                 standPat = NNUE.GetBoardValue(aiColour);
             }
@@ -264,14 +264,14 @@ namespace NeuralChess.Engine
                 if (move.IsLegal(board))
                 {
                     move.MovePiece(board);
-                    NNUE.UpdateAccumulator(move);
+                    if (UseNNUE) NNUE.UpdateAccumulator(move);
                     board.ActiveColour ^= 1;
 
                     int moveValue = QuiescenceSearch(board, aiColour, multiplier, alpha, beta);
 
                     board.ActiveColour ^= 1;
                     move.ReverseMove(board);
-                    NNUE.ReverseAccumulator(move);
+                    if (UseNNUE) NNUE.ReverseAccumulator(move);
 
                     if (isMaximising)
                     {
