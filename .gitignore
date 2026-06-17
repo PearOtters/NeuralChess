@@ -375,6 +375,7 @@ env/
 *.onnx
 *.onnx.data
 stockfish.exe
+*.bin
 
 *.csv
 *.npz
