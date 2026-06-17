@@ -83,7 +83,10 @@ namespace NeuralChess.Engine
 
         public static void Initialise()
         {
-            return;
+            Board dummyBoard = new(Constants.regular_start);
+            GenerateAccumulatorFromBoard(dummyBoard);
+            GetBoardValue(Colour.White);
+            GetBoardValue(Colour.Black);
         }
 
         public static void GenerateAccumulatorFromBoard(Board board)
