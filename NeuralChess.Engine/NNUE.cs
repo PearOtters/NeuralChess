@@ -1,11 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Drawing;
-using System.Numerics;
+﻿using System.Numerics;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
-using System.Text;
 
 namespace NeuralChess.Engine
 {
@@ -314,14 +309,14 @@ namespace NeuralChess.Engine
             {
                 for (int v = 0; v < 8; v++)
                 {
-                    ClampedAccumulator[v] = Avx2.PackUnsignedSaturate(Vector256.Clamp(WAccumulator[v * 2], UpperBound, LowerBound), Vector256.Clamp(WAccumulator[v * 2 + 1], UpperBound, LowerBound));
+                    ClampedAccumulator[v] = Avx2.PackUnsignedSaturate(Vector256.Clamp(WAccumulator[v * 2], LowerBound, UpperBound), Vector256.Clamp(WAccumulator[v * 2 + 1], LowerBound, UpperBound));
                 }
             }
             else
             {
                 for (int v = 0; v < 8; v++)
                 {
-                    ClampedAccumulator[v] = Avx2.PackUnsignedSaturate(Vector256.Clamp(BAccumulator[v * 2], UpperBound, LowerBound), Vector256.Clamp(BAccumulator[v * 2 + 1], UpperBound, LowerBound));
+                    ClampedAccumulator[v] = Avx2.PackUnsignedSaturate(Vector256.Clamp(BAccumulator[v * 2], LowerBound, UpperBound), Vector256.Clamp(BAccumulator[v * 2 + 1], LowerBound, UpperBound));
                 }
             }
 
