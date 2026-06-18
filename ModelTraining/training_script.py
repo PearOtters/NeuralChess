@@ -5,6 +5,7 @@ import torch.optim as optim
 from torch.optim.lr_scheduler import CosineAnnealingLR
 from torch.amp import GradScaler, autocast
 from model import ChessValueNet
+from loss_function import WDL_Loss
 from dataset_manager import ChunkedChessDataset
 from datetime import datetime
 
@@ -14,7 +15,7 @@ EPOCHS = 20
 device = torch.device(GPU if torch.xpu.is_available() else "cpu")
 model = ChessValueNet().to(device)
 
-criterion = nn.MSELoss()
+criterion = WDL_Loss(scaling_factor=4.0)
 
 optimizer = optim.Adam(model.parameters(), lr=0.002)
 scheduler = CosineAnnealingLR(optimizer, T_max=EPOCHS, eta_min=1e-6)
