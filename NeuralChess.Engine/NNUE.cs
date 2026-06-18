@@ -15,7 +15,7 @@ namespace NeuralChess.Engine
         private static readonly Vector256<sbyte>[] W2 = new Vector256<sbyte>[256];
         private static readonly int[] B2 = new int[32];
 
-        private static readonly sbyte[] W3 = new sbyte[32];
+        private static readonly int[] W3 = new int[32];
         private static readonly int B3;
 
         private static readonly Vector256<short>[] WAccumulator = new Vector256<short>[16];
@@ -29,7 +29,7 @@ namespace NeuralChess.Engine
         {
             byte[] rawBytes = File.ReadAllBytes("nnue_network.bin");
 
-            if (rawBytes.Length != 402_084)
+            if (rawBytes.Length != 402_180)
             {
                 throw new Exception($"Invalid NNUE file size. Expected 402,084 bytes but found {rawBytes.Length}.");
             }
@@ -72,7 +72,7 @@ namespace NeuralChess.Engine
                     B3 = b3Ptr[0];
                     offset += 4;
 
-                    sbyte* w3Ptr = (sbyte*)(ptr + offset);
+                    int* w3Ptr = (int*)(ptr + offset);
                     for (int i = 0; i < 32; i++)
                     {
                         W3[i] = w3Ptr[i];
@@ -335,8 +335,8 @@ namespace NeuralChess.Engine
             int weightIndex = 0;
 
             int runningScaledTotal = 0;
-            int shift = 7;
-            int finalScale = 160;
+            int shift = 4;
+            int finalScale = 161;
 
             for (int n = 0; n < 32; n++)
             {
