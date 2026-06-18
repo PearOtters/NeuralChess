@@ -331,7 +331,6 @@ namespace NeuralChess.Engine
                 }
             }
 
-
             int weightIndex = 0;
 
             int runningScaledTotal = 0;
