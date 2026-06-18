@@ -29,9 +29,9 @@ def export_to_binary(model_path, output_path):
 
     L1_SCALE = 127.0
     L2_SCALE = 16.0
-    OUT_SCALE = 16.0
+    OUT_SCALE = 127.0
 
-    L2_CSHARP_SHIFT_DIVISOR = 128.0
+    L2_CSHARP_SHIFT_DIVISOR = 16.0
 
     print("Extracting and Quantising Layer 1 (Weights)...")
     w1_floats = model.layer1.weight.data.numpy().T
