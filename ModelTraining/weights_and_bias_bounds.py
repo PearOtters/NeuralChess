@@ -39,7 +39,7 @@ def inspect_model(model_path):
         return
 
     L1_SCALE = 127.0
-    L2_SCALE = 127.0
+    L2_SCALE = 16.0
     OUT_SCALE = 127.0
 
     L2_CSHARP_SHIFT_DIVISOR = 128.0

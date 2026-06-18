@@ -28,8 +28,8 @@ def export_to_binary(model_path, output_path):
     model.eval()
 
     L1_SCALE = 127.0
-    L2_SCALE = 127.0
-    OUT_SCALE = 127.0
+    L2_SCALE = 16.0
+    OUT_SCALE = 16.0
 
     L2_CSHARP_SHIFT_DIVISOR = 128.0
 
@@ -49,7 +49,7 @@ def export_to_binary(model_path, output_path):
 
     print("Extracting and Quantising Layer 3 (Weights & Biases)...")
     w3_floats = model.output_layer.weight.data.numpy()
-    w3_quantised = np.clip(np.round(w3_floats * OUT_SCALE), -128, 127).astype(np.int8)
+    w3_quantised = np.clip(np.round(w3_floats * OUT_SCALE), -2147483648, 2147483647).astype(np.int32)
     
     b3_floats = model.output_layer.bias.data.numpy()
     B3_SCALE = (L1_SCALE * L2_SCALE / L2_CSHARP_SHIFT_DIVISOR) * OUT_SCALE
