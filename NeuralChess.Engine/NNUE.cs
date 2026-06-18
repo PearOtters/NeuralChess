@@ -140,7 +140,7 @@ namespace NeuralChess.Engine
             int wToIndex = ((wPromotion != -1 ? wPromotion : wPiece) * 64 + wToSquare) * 16;
 
             int bFromIndex = (bPiece * 64 + bFromSquare) * 16;
-            int bToIndex = ((bPromotion != -1 ? bPromotion : bPiece) * 64 + bToSquare) * 16;
+            int bToIndex = ((wPromotion != -1 ? bPromotion : bPiece) * 64 + bToSquare) * 16;
 
             if (move.Special == SpecialMove.CASTLE)
             {
@@ -235,7 +235,7 @@ namespace NeuralChess.Engine
             int wToIndex = ((wPromotion != -1 ? wPromotion : wPiece) * 64 + wToSquare) * 16;
 
             int bFromIndex = (bPiece * 64 + bFromSquare) * 16;
-            int bToIndex = ((bPromotion != -1 ? bPromotion : bPiece) * 64 + bToSquare) * 16;
+            int bToIndex = ((wPromotion != -1 ? bPromotion : bPiece) * 64 + bToSquare) * 16;
 
             if (move.Special == SpecialMove.CASTLE)
             {
