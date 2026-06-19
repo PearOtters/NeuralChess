@@ -20,7 +20,7 @@ criterion = WDL_BCE_Loss(scaling_factor=4.0)
 optimizer = optim.Adam(model.parameters(), lr=0.001)
 scheduler = CosineAnnealingLR(optimizer, T_max=EPOCHS, eta_min=1e-6)
 
-scaler = GradScaler(device=device.type)
+scaler = GradScaler("xpu")
 
 dataset = ChunkedChessDataset(folder_path="./train_dataset_chunks")
 train_loader = DataLoader(dataset, batch_size=4096)
@@ -38,7 +38,7 @@ for epoch in range(1, EPOCHS + 1):
 
         optimizer.zero_grad()
 
-        with autocast(device_type=device.type, dtype=torch.float16):
+        with autocast(device_type="xpu", dtype=torch.float16):
             predictions = model(batch_boards)
             loss = criterion(predictions, batch_scores)
 
