@@ -59,10 +59,10 @@ def export_to_binary(model_path, output_path):
     with open(output_path, "wb") as f:
         f.write(w1_quantised.tobytes())
         f.write(b1_quantised.tobytes())
-        f.write(b2_quantised.tobytes())
         f.write(w2_quantised.tobytes())
-        f.write(b3_quantised.tobytes())
+        f.write(b2_quantised.tobytes())
         f.write(w3_quantised.tobytes())
+        f.write(b3_quantised.tobytes())
 
     print("Export complete! Your engine is ready to load the binary.")
 
