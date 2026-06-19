@@ -3,7 +3,7 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 from torch.amp import autocast
 from model import ChessValueNet
-from loss_function import WDL_Loss
+from loss_function import WDL_BCE_Loss
 from dataset_manager import ChunkedChessDataset
 from datetime import datetime
 
@@ -20,7 +20,7 @@ test_loader = DataLoader(dataset, batch_size=1024)
 
 print(f"Starting training loop on device: {device}")
 
-criterion = WDL_Loss(scaling_factor=4.0)
+criterion = WDL_BCE_Loss(scaling_factor=4.0)
 running_loss = 0.0
 batch_count = 0
 
