@@ -4,7 +4,7 @@ from model import ChessValueNet
 
 def scramble_w2_weights(weight_tensor):
     scrambled_tensor = weight_tensor.clone()
-    for block in range(256 // 32):
+    for block in range(512 // 32):
         start_idx = block * 32
         end_idx = start_idx + 32
         chunk = weight_tensor[:, start_idx:end_idx]
