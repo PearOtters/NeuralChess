@@ -7,9 +7,9 @@ from loss_function import WDL_BCE_Loss
 from dataset_manager import ChunkedChessDataset
 from datetime import datetime
 
-GPU = "xpu"
+GPU = "xpu" if torch.xpu.is_available() else "cpu"
 
-device = torch.device(GPU if torch.xpu.is_available() else "cpu")
+device = torch.device(GPU)
 model = ChessValueNet().to(device)
 
 model.load_state_dict(torch.load("chess_model_weights.pth", map_location=device, weights_only=True))
@@ -29,7 +29,7 @@ with torch.no_grad():
         batch_boards = batch_boards.to(device)
         batch_scores = batch_scores.to(device).float()
 
-        with autocast(device_type=GPU, dtype=torch.float16):
+        with autocast(device_type=device.type, dtype=torch.float16):
             predictions = model(batch_boards)
             loss = criterion(predictions, batch_scores)
 
