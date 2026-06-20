@@ -234,7 +234,9 @@ namespace NeuralChess.Engine
 
             if (UseNNUE)
             {
-                standPat = NNUE.GetBoardValue(aiColour);
+                int activePlayerScore = NNUE.GetBoardValue(board.ActiveColour);
+
+                standPat = (board.ActiveColour == aiColour) ? activePlayerScore : -activePlayerScore;
             }
             else standPat = board.GetBoardValue() * multiplier;
             bool isMaximising = (aiColour == board.ActiveColour);
