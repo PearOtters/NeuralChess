@@ -29,7 +29,7 @@ with torch.no_grad():
         batch_boards = batch_boards.to(device)
         batch_scores = batch_scores.to(device).float()
 
-        with autocast(device_type=device.type, dtype=torch.float16):
+        with autocast(device_type="xpu", dtype=torch.float16):
             predictions = model(batch_boards)
             loss = criterion(predictions, batch_scores)
 
