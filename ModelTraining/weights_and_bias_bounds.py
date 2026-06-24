@@ -42,7 +42,7 @@ def inspect_model(model_path):
     L2_SCALE = 16.0
     OUT_SCALE = 127.0
 
-    L2_CSHARP_SHIFT_DIVISOR = 128.0
+    L2_CSHARP_SHIFT_DIVISOR = 16.0
 
     # Pass each layer's weights and biases into the analyzer
     analyze_tensor("Layer 1 Weights (W1)", model.layer1.weight)
