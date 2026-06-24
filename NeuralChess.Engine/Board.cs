@@ -443,10 +443,10 @@ namespace NeuralChess.Engine
             return fen.ToString();
         }
 
-        public void CalculateBoardState(float[] boardState, int colour)
+        public void CalculateBoardState(float[] boardState)
         {
             Array.Clear(boardState, 0, 768);
-            if (colour == Colour.White)
+            if (ActiveColour == Colour.White)
             {
                 for (int i = 0; i < 12; i++)
                 {

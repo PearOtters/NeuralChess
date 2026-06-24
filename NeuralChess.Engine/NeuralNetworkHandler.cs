@@ -23,11 +23,13 @@ namespace NeuralChess.Engine
         {
             float[]? currentBuffer = threadLocalBoardState.Value;
             if (currentBuffer == null) return 0;
-            board.CalculateBoardState(currentBuffer, colour);
+            board.CalculateBoardState(currentBuffer);
 
             float output = GetNeuralNetworkOutput();
 
-            return (int)(output * 100);
+            int multiplier = colour == board.ActiveColour ? 1 : -1;
+
+            return (int)(output * 100) * multiplier;
         }
 
         public static float GetNeuralNetworkOutput()

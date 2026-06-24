@@ -113,15 +113,17 @@ namespace NeuralChess.Engine
             double timeTaken = searchTimer.ElapsedMilliseconds / 1000d;
             File.AppendAllText("log.txt", $"time taken: {timeTaken}\n");
             File.AppendAllText("log.txt", $"depth completed: {completedDepth}\n");
-            if (UseNNUE) File.AppendAllText("log.txt", $"pre move NNUE evaluation: {NNUE.GetBoardValue(aiColour) / 100d}\n");
+            if (UseNNUE) File.AppendAllText("log.txt", $"pre move NNUE evaluation: {(board.ActiveColour == aiColour ? NNUE.GetBoardValue(board.ActiveColour) : -NNUE.GetBoardValue(board.ActiveColour)) / 100d}\n");
             File.AppendAllText("log.txt", $"pre move neural network evaluation: {NeuralNetworkHandler.GetBoardValue(board, aiColour) / 100d}\n");
             File.AppendAllText("log.txt", $"pre move static evaluation: {board.GetBoardValue() * multiplier / 100d}\n");
             currentBestMove.MovePiece(board);
+            board.ActiveColour ^= 1;
             if (UseNNUE) NNUE.UpdateAccumulator(currentBestMove);
-            if (UseNNUE) File.AppendAllText("log.txt", $"post move NNUE evaluation: {NNUE.GetBoardValue(aiColour) / 100d}\n");
+            if (UseNNUE) File.AppendAllText("log.txt", $"post move NNUE evaluation: {(board.ActiveColour == aiColour ? NNUE.GetBoardValue(board.ActiveColour) : -NNUE.GetBoardValue(board.ActiveColour)) / 100d}\n");
             File.AppendAllText("log.txt", $"post move neural network evaluation: {NeuralNetworkHandler.GetBoardValue(board, aiColour) / 100d}\n");
             File.AppendAllText("log.txt", $"post move static evaluation: {board.GetBoardValue() * multiplier / 100d}\n\n");
             currentBestMove.ReverseMove(board);
+            board.ActiveColour ^= 1;
             if (UseNNUE) NNUE.ReverseAccumulator(currentBestMove);
         }
 
@@ -234,7 +236,6 @@ namespace NeuralChess.Engine
             if (UseNNUE)
             {
                 int activePlayerScore = NNUE.GetBoardValue(board.ActiveColour);
-
                 standPat = (board.ActiveColour == aiColour) ? activePlayerScore : -activePlayerScore;
             }
             else standPat = board.GetBoardValue() * multiplier;
