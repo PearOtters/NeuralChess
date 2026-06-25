@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Numerics;
 using System.Text;
 
@@ -64,6 +65,7 @@ namespace NeuralChess.Engine
                     {
                         board.Pieces[i] ^= toMask;
                         CapturedPiece = i;
+                        board.ZobristHash ^= Zobrist.PieceKeys[CapturedPiece, ToSquare];
                         break;
                     }
                 }
@@ -81,6 +83,7 @@ namespace NeuralChess.Engine
                 board.Pieces[CapturedPiece] ^= epMask;
                 board.Colours[enemyColour] ^= epMask;
                 board.AllPieces ^= epMask;
+                board.ZobristHash ^= Zobrist.PieceKeys[CapturedPiece, capturedPawnSquare];
             }
 
             board.Pieces[SelectedPiece] ^= fromMask;
@@ -124,6 +127,9 @@ namespace NeuralChess.Engine
                 board.Pieces[rookPiece] ^= rookToMask;
                 board.Colours[movingColour] ^= rookToMask;
                 board.AllPieces ^= rookToMask;
+
+                board.ZobristHash ^= Zobrist.PieceKeys[rookPiece, rookFrom];
+                board.ZobristHash ^= Zobrist.PieceKeys[rookPiece, rookTo];
             }
 
             if (SelectedPiece == Piece.WhiteKing) board.CastleRights &= ~(CastlingRights.WK | CastlingRights.WQ);
@@ -137,11 +143,20 @@ namespace NeuralChess.Engine
             if (SelectedPiece == Piece.WhitePawn && FromSquare + 16 == ToSquare)
             {
                 board.EnPassantSquare = FromSquare + 8;
+                board.ZobristHash ^= Zobrist.EnPassantSquares[board.EnPassantSquare % 8];
             }
             else if (SelectedPiece == Piece.BlackPawn && FromSquare - 16 == ToSquare)
             {
                 board.EnPassantSquare = FromSquare - 8;
+                board.ZobristHash ^= Zobrist.EnPassantSquares[board.EnPassantSquare % 8];
             }
+
+            board.ZobristHash ^= Zobrist.PieceKeys[SelectedPiece, FromSquare];
+            board.ZobristHash ^= Zobrist.PieceKeys[PromotionPiece != -1 ? PromotionPiece : SelectedPiece, ToSquare];
+            if (PrevEnPassant != -1) board.ZobristHash ^= Zobrist.EnPassantSquares[PrevEnPassant % 8];
+            board.ZobristHash ^= Zobrist.CastlingRights[PrevCastleRights];
+            board.ZobristHash ^= Zobrist.CastlingRights[board.CastleRights];
+            board.ZobristHash ^= Zobrist.SideToMove;
         }
 
         public void ReverseMove(Board board)
@@ -179,6 +194,7 @@ namespace NeuralChess.Engine
                 board.Pieces[CapturedPiece] |= capturedMask;
                 board.Colours[capturedColour] |= capturedMask;
                 board.AllPieces |= capturedMask;
+                board.ZobristHash ^= Zobrist.PieceKeys[CapturedPiece, capturedSquare];
             }
 
             if (Special == SpecialMove.CASTLE)
@@ -207,8 +223,21 @@ namespace NeuralChess.Engine
                 board.Pieces[rookPiece] |= rookFromMask;
                 board.Colours[movingColour] |= rookFromMask;
                 board.AllPieces |= rookFromMask;
+
+                board.ZobristHash ^= Zobrist.PieceKeys[rookPiece, rookFrom];
+                board.ZobristHash ^= Zobrist.PieceKeys[rookPiece, rookTo];
             }
 
+            if (SelectedPiece == Piece.WhitePawn && FromSquare + 16 == ToSquare) board.ZobristHash ^= Zobrist.EnPassantSquares[(FromSquare + 8) % 8];
+            else if (SelectedPiece == Piece.BlackPawn && FromSquare - 16 == ToSquare) board.ZobristHash ^= Zobrist.EnPassantSquares[(FromSquare - 8) % 8];
+
+            board.ZobristHash ^= Zobrist.PieceKeys[SelectedPiece, FromSquare];
+            board.ZobristHash ^= Zobrist.PieceKeys[PromotionPiece != -1 ? PromotionPiece : SelectedPiece, ToSquare];
+            if (PrevEnPassant != -1) board.ZobristHash ^= Zobrist.EnPassantSquares[PrevEnPassant % 8];
+            board.ZobristHash ^= Zobrist.CastlingRights[board.CastleRights];
+            board.ZobristHash ^= Zobrist.CastlingRights[PrevCastleRights];
+            board.ZobristHash ^= Zobrist.SideToMove;
+            
             board.CastleRights = PrevCastleRights;
             board.EnPassantSquare = PrevEnPassant;
         }

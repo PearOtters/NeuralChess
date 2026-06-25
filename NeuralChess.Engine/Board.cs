@@ -44,6 +44,7 @@ namespace NeuralChess.Engine
         public ulong AllPieces;
         public int ActiveColour = Colour.White;
         public int EnPassantSquare = -1;
+        public ulong ZobristHash;
 
         private static readonly Dictionary<char, int> PieceMap = new()
         {
@@ -141,6 +142,7 @@ namespace NeuralChess.Engine
 
         private void LoadPositionFromFen(string fen)
         {
+            ZobristHash = 0;
             Array.Clear(Pieces, 0, Pieces.Length);
             Array.Clear(Colours, 0, Colours.Length);
 
@@ -167,6 +169,7 @@ namespace NeuralChess.Engine
                     int pieceType = PieceMap[c];
 
                     Pieces[pieceType] |= (1UL << squareIndex);
+                    ZobristHash ^= Zobrist.PieceKeys[pieceType, squareIndex];
 
                     file++;
                 }
@@ -175,6 +178,10 @@ namespace NeuralChess.Engine
             if (fenParts.Length > 1)
             {
                 ActiveColour = (fenParts[1] == "w") ? Colour.White : Colour.Black;
+                if (ActiveColour == Colour.Black)
+                {
+                    ZobristHash ^= Zobrist.SideToMove;
+                }
             }
 
             CastleRights = 0;
@@ -185,6 +192,7 @@ namespace NeuralChess.Engine
                 if (fenParts[2].Contains('k')) CastleRights |= CastlingRights.BK;
                 if (fenParts[2].Contains('q')) CastleRights |= CastlingRights.BQ;
             }
+            ZobristHash ^= Zobrist.CastlingRights[CastleRights];
 
             EnPassantSquare = -1;
             if (fenParts.Length > 3 && fenParts[3] != "-")
@@ -193,6 +201,7 @@ namespace NeuralChess.Engine
                 char r = fenParts[3][1];
 
                 EnPassantSquare = (r - '1') * 8 + (f - 'A');
+                ZobristHash ^= Zobrist.EnPassantSquares[EnPassantSquare % 8];
             }
 
             UpdateColours();
@@ -218,6 +227,8 @@ namespace NeuralChess.Engine
                 CastleRights = this.CastleRights,
                 ActiveColour = this.ActiveColour,
                 AllPieces = this.AllPieces,
+                EnPassantSquare = this.EnPassantSquare,
+                ZobristHash = this.ZobristHash,
                 Colours = (ulong[])this.Colours.Clone(),
                 Pieces = (ulong[])this.Pieces.Clone()
             };
