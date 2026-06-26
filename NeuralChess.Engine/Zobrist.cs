@@ -34,7 +34,7 @@ namespace NeuralChess.Engine
             SideToMove = RandomUlong(rand);
 
             for (int i = 0; i < 16; i++) CastlingRights[i] = RandomUlong(rand);
-            for (int i = 0; i < 16; i++) EnPassantSquares[i] = RandomUlong(rand);
+            for (int i = 0; i < 8; i++) EnPassantSquares[i] = RandomUlong(rand);
         }
 
         static ulong RandomUlong(Random rand)
