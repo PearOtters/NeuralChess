@@ -11,34 +11,32 @@ namespace NeuralChess.Engine
         NONE,
         CASTLE,
         PROMOTION,
-        EN_PASSANT
+        EN_PASSANT,
+        DOUBLE_PUSH
     }
 
-    public class Move
+    public class Move(int selectedPiece, int fromSquare, int toSquare, SpecialMove special)
     {
-        internal SpecialMove Special;
-        internal int SelectedPiece;
-        internal int FromSquare, ToSquare;
+        internal int SelectedPiece = selectedPiece;
+        internal int FromSquare = fromSquare;
+        internal int ToSquare = toSquare;
+        internal SpecialMove Special = special;
+
         internal int PromotionPiece = -1;
         internal int CapturedPiece = -1;
         internal uint PrevCastleRights = 0;
         internal int PrevEnPassant = -1;
         internal int Score = 0;
 
-        public Move(int piece, int fromSquare, int toSquare)
+        public Move(int move) : this((move >> 15) & 0xf, move & 0x3f, (move >> 6) & 0x3f, (SpecialMove)((move >> 12) & 0x7))
         {
-            SelectedPiece = piece;
-            FromSquare = fromSquare;
-            ToSquare = toSquare;
-            Special = SpecialMove.NONE;
+            PromotionPiece = (move >> 19) & 0xf;
+            if (PromotionPiece == 0) PromotionPiece = -1;            
         }
 
-        public Move(int piece, int fromSquare, int toSquare, SpecialMove special)
+        public int ToInt()
         {
-            SelectedPiece = piece;
-            FromSquare = fromSquare;
-            ToSquare = toSquare;
-            Special = special;
+            return FromSquare | (ToSquare << 6) | ((int)Special << 12) | (SelectedPiece << 15) | (PromotionPiece != -1 ? PromotionPiece << 19 : 0);
         }
 
         public void MovePiece(Board board)
@@ -140,12 +138,12 @@ namespace NeuralChess.Engine
             if (FromSquare == 56 || ToSquare == 56) board.CastleRights &= ~CastlingRights.BQ;
             if (FromSquare == 63 || ToSquare == 63) board.CastleRights &= ~CastlingRights.BK;
 
-            if (SelectedPiece == Piece.WhitePawn && FromSquare + 16 == ToSquare)
+            if (Special == SpecialMove.DOUBLE_PUSH && FromSquare + 16 == ToSquare)
             {
                 board.EnPassantSquare = FromSquare + 8;
                 board.ZobristHash ^= Zobrist.EnPassantSquares[board.EnPassantSquare % 8];
             }
-            else if (SelectedPiece == Piece.BlackPawn && FromSquare - 16 == ToSquare)
+            else if (Special == SpecialMove.DOUBLE_PUSH && FromSquare - 16 == ToSquare)
             {
                 board.EnPassantSquare = FromSquare - 8;
                 board.ZobristHash ^= Zobrist.EnPassantSquares[board.EnPassantSquare % 8];
@@ -228,8 +226,8 @@ namespace NeuralChess.Engine
                 board.ZobristHash ^= Zobrist.PieceKeys[rookPiece, rookTo];
             }
 
-            if (SelectedPiece == Piece.WhitePawn && FromSquare + 16 == ToSquare) board.ZobristHash ^= Zobrist.EnPassantSquares[(FromSquare + 8) % 8];
-            else if (SelectedPiece == Piece.BlackPawn && FromSquare - 16 == ToSquare) board.ZobristHash ^= Zobrist.EnPassantSquares[(FromSquare - 8) % 8];
+            if (Special == SpecialMove.DOUBLE_PUSH && FromSquare + 16 == ToSquare) board.ZobristHash ^= Zobrist.EnPassantSquares[(FromSquare + 8) % 8];
+            else if (Special == SpecialMove.DOUBLE_PUSH && FromSquare - 16 == ToSquare) board.ZobristHash ^= Zobrist.EnPassantSquares[(FromSquare - 8) % 8];
 
             board.ZobristHash ^= Zobrist.PieceKeys[SelectedPiece, FromSquare];
             board.ZobristHash ^= Zobrist.PieceKeys[PromotionPiece != -1 ? PromotionPiece : SelectedPiece, ToSquare];

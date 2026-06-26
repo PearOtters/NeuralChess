@@ -52,7 +52,7 @@ namespace NeuralChess.Engine
             ExtractMoves(piece, u1, -8, moves);
 
             ulong u2 = (u1 << 8) & ~board.AllPieces & 0x00000000FF000000UL;
-            ExtractMoves(piece, u2, -16, moves);
+            ExtractMoves(piece, u2, -16, moves, SpecialMove.DOUBLE_PUSH);
 
             ulong u1l1 = ((pawns & Constants.NotAFile)  << 7) & board.Colours[Colour.Black];
             ExtractMoves(piece, u1l1, -7, moves);
@@ -80,7 +80,7 @@ namespace NeuralChess.Engine
             ExtractMoves(piece, d1, 8, moves);
 
             ulong d2 = (d1 >> 8) & ~board.AllPieces & 0x000000FF00000000UL;
-            ExtractMoves(piece, d2, 16, moves);
+            ExtractMoves(piece, d2, 16, moves, SpecialMove.DOUBLE_PUSH);
 
             ulong d1r1 = ((pawns & Constants.NotHFile) >> 7) & board.Colours[Colour.White];
             ExtractMoves(piece, d1r1, 7, moves);
@@ -980,7 +980,7 @@ namespace NeuralChess.Engine
             ExtractMoves(piece, d1r1, 7, moves);
         }
 
-        public static void ExtractMoves(int piece, ulong bitboard, int offset, List<Move> moves)
+        public static void ExtractMoves(int piece, ulong bitboard, int offset, List<Move> moves, SpecialMove special = SpecialMove.NONE)
         {
             int colour = piece < 6 ? Colour.White : Colour.Black;
             while (bitboard != 0)
@@ -996,7 +996,7 @@ namespace NeuralChess.Engine
                 }
                 else
                 {
-                    moves.Add(new Move(piece, fromSquare, toSquare));
+                    moves.Add(new Move(piece, fromSquare, toSquare, special));
                 }
                 bitboard &= (bitboard - 1);
             }

@@ -8,7 +8,7 @@ namespace NeuralChess.Engine
 {
     public class AlphaBeta(int MaxDepth, bool UseNNUE = true) : Engine($"AlphaBeta {(UseNNUE ? "NNUE" : "")} Def {MaxDepth}")
     {
-        private const int CheckmateScore = 1000000;
+        private const int CheckmateScore = 30000;
         private static readonly int[] MVV_LVA_Values =
         [
             100, 300, 300, 500, 900, 10000,
@@ -18,6 +18,9 @@ namespace NeuralChess.Engine
         private Stopwatch SearchTimer = Stopwatch.StartNew();
         private int MaximumTime;
         private bool TimeIsUp;
+        private const int TTSize = 16_777_216;
+        private const int TTMask = TTSize - 1;
+        private static TTEntry[] TranspositionTable = new TTEntry[TTSize];
 
         public override void Play(Board board, int maximumTime, int maximumDepth)
         {
@@ -55,10 +58,18 @@ namespace NeuralChess.Engine
             int aiColour = board.ActiveColour;
             int multiplier = board.ActiveColour == Colour.White ? 1 : -1;
 
-            bool abortSearch = false;
-            int completedDepth = 0;
+            int bestDepth = 0;
 
-            for (int depth = 1; depth <= toDepth; depth++)
+            TTEntry tTEntry = TranspositionTable[board.ZobristHash & (TTMask)];
+            if (tTEntry.ZobristKey == board.ZobristHash)
+            {
+                bestDepth = tTEntry.Depth;
+                currentBestMove = new Move(tTEntry.Move);
+            }
+
+            int completedDepth = bestDepth;
+
+            for (byte depth = 1; depth <= toDepth; depth++)
             {
                 Move? depthBestMove = null;
                 int bestGain = int.MinValue;
@@ -74,11 +85,7 @@ namespace NeuralChess.Engine
 
                 foreach (Move move in rootLegalMoves)
                 {
-                    if (TimeIsUp)
-                    {
-                        abortSearch = true;
-                        break;
-                    }
+                    if (TimeIsUp) break;
 
                     move.MovePiece(board);
                     if (UseNNUE) NNUE.UpdateAccumulator(move);
@@ -99,15 +106,16 @@ namespace NeuralChess.Engine
                     alpha = Math.Max(alpha, bestGain);
                 }
 
-                if (abortSearch)
-                {
-                    break;
-                }
+                if (TimeIsUp) break;
 
                 if (depthBestMove != null)
                 {
-                    currentBestMove = depthBestMove;
-                    completedDepth = depth;
+                    if (depth > bestDepth)
+                    {
+                        currentBestMove = depthBestMove;
+                        completedDepth = depth;
+                        TranspositionTable[board.ZobristHash & TTMask] = new TTEntry(board.ZobristHash, depthBestMove.ToInt(), (short)bestGain, depth, 0);
+                    }
                 }
             }
             if (currentBestMove == null)
