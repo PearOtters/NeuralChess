@@ -27,6 +27,7 @@ namespace NeuralChess.Engine
                 else if (command == "isready")
                 {
                     NNUE.Initialise();
+                    Zobrist.Initialise();
                     Console.WriteLine("readyok");
                 }
                 else if (command == "position")
