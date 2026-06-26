@@ -31,7 +31,6 @@ namespace NeuralChess.Engine
             if (UseNNUE) NNUE.GenerateAccumulatorFromBoard(board);
 
             List<Move> pseudoLegalMoves = MoveGenerator.GenerateAllMoves(board);
-            OrderMoves(pseudoLegalMoves, board);
 
             int toDepth = int.MaxValue;
             if (maximumTime == -1)
@@ -65,7 +64,9 @@ namespace NeuralChess.Engine
             {
                 bestDepth = tTEntry.Depth;
                 currentBestMove = new Move(tTEntry.Move);
+                OrderMoves(pseudoLegalMoves, board, currentBestMove.MoveValue);
             }
+            else OrderMoves(pseudoLegalMoves, board);
 
             int completedDepth = bestDepth;
 
@@ -77,7 +78,7 @@ namespace NeuralChess.Engine
                 int alpha = int.MinValue;
                 int beta = int.MaxValue;
 
-                if (depth > 1 && currentBestMove != null)
+                if (depth > completedDepth && currentBestMove != null)
                 {
                     rootLegalMoves.Remove(currentBestMove);
                     rootLegalMoves.Insert(0, currentBestMove);
@@ -114,7 +115,7 @@ namespace NeuralChess.Engine
                     {
                         currentBestMove = depthBestMove;
                         completedDepth = depth;
-                        TranspositionTable[board.ZobristHash & TTMask] = new TTEntry(board.ZobristHash, depthBestMove.ToInt(), (short)bestGain, depth, 0);
+                        TranspositionTable[board.ZobristHash & TTMask] = new TTEntry(board.ZobristHash, depthBestMove.MoveValue, (short)bestGain, depth, 0);
                     }
                 }
             }
@@ -224,28 +225,94 @@ namespace NeuralChess.Engine
             return bestGain;
         }
 
+        private static void OrderMoves(List<Move> moves, Board board, int hashMoveInt)
+        {
+            foreach (Move move in moves)
+            {
+                move.Score = 0;
+
+                if (move.MoveValue == hashMoveInt)
+                {
+                    move.Score = 2000000;
+                    continue;
+                }
+
+                if (move.Special == SpecialMove.EN_PASSANT)
+                {
+                    move.Score = 900;
+                }
+
+                else
+                {
+                    ulong toSquareMask = 1UL << move.ToSquare;
+
+                    if ((board.AllPieces & toSquareMask) != 0)
+                    {
+                        int victimType = -1;
+
+                        int startEnemy = move.SelectedPiece < 6 ? 6 : 0;
+                        int endEnemy = move.SelectedPiece < 6 ? 12 : 6;
+
+                        for (int i = startEnemy; i < endEnemy; i++)
+                        {
+                            if ((board.Pieces[i] & toSquareMask) != 0)
+                            {
+                                victimType = i;
+                                break;
+                            }
+                        }
+
+                        if (victimType != -1)
+                        {
+                            move.Score = 10 * MVV_LVA_Values[victimType] - MVV_LVA_Values[move.SelectedPiece];
+                        }
+                    }
+                }
+
+                if (move.Special == SpecialMove.PROMOTION)
+                {
+                    move.Score += 9000;
+                }
+            }
+
+            moves.Sort((m1, m2) => m2.Score.CompareTo(m1.Score));
+        }
+
         private static void OrderMoves(List<Move> moves, Board board)
         {
             foreach (Move move in moves)
             {
                 move.Score = 0;
-                ulong toSquareMask = 1UL << move.ToSquare;
 
-                if ((board.AllPieces & toSquareMask) != 0)
+                if (move.Special == SpecialMove.EN_PASSANT)
                 {
-                    int victimType = -1;
-                    for (int i = 0; i < 12; i++)
-                    {
-                        if ((board.Pieces[i] & toSquareMask) != 0)
-                        {
-                            victimType = i;
-                            break;
-                        }
-                    }
+                    move.Score = 900;
+                }
 
-                    if (victimType != -1)
+                else
+                {
+                    ulong toSquareMask = 1UL << move.ToSquare;
+
+                    if ((board.AllPieces & toSquareMask) != 0)
                     {
-                        move.Score = 10 * MVV_LVA_Values[victimType] - MVV_LVA_Values[move.SelectedPiece];
+                        int victimType = -1;
+
+                        int startEnemy = move.SelectedPiece < 6 ? 6 : 0;
+                        int endEnemy = move.SelectedPiece < 6 ? 12 : 6;
+
+                        for (int i = startEnemy; i < endEnemy; i++)
+                        {
+                            if ((board.Pieces[i] & toSquareMask) != 0)
+                            {
+                                victimType = i;
+                                break;
+                            }
+                        }
+
+                        if (victimType != -1)
+                        {
+                            move.Score = 10 * MVV_LVA_Values[victimType] - MVV_LVA_Values[move.SelectedPiece];
+                        }
                     }
                 }
 

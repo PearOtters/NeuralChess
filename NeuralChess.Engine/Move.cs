@@ -15,12 +15,12 @@ namespace NeuralChess.Engine
         DOUBLE_PUSH
     }
 
-    public class Move(int selectedPiece, int fromSquare, int toSquare, SpecialMove special)
+    public class Move
     {
-        internal int SelectedPiece = selectedPiece;
-        internal int FromSquare = fromSquare;
-        internal int ToSquare = toSquare;
-        internal SpecialMove Special = special;
+        internal int SelectedPiece;
+        internal int FromSquare;
+        internal int ToSquare;
+        internal SpecialMove Special;
 
         internal int PromotionPiece = -1;
         internal int CapturedPiece = -1;
@@ -28,10 +28,23 @@ namespace NeuralChess.Engine
         internal int PrevEnPassant = -1;
         internal int Score = 0;
 
+        internal readonly int MoveValue;
+
+        public Move(int selectedPiece, int fromSquare, int toSquare, SpecialMove special)
+        {
+            SelectedPiece = selectedPiece;
+            FromSquare = fromSquare;
+            ToSquare = toSquare;
+            Special = special;
+
+            MoveValue = ToInt();
+        }
+
         public Move(int move) : this((move >> 15) & 0xf, move & 0x3f, (move >> 6) & 0x3f, (SpecialMove)((move >> 12) & 0x7))
         {
             PromotionPiece = (move >> 19) & 0xf;
-            if (PromotionPiece == 0) PromotionPiece = -1;            
+            if (PromotionPiece == 0) PromotionPiece = -1;
+            MoveValue = ToInt();
         }
 
         public int ToInt()
