@@ -14,10 +14,16 @@ namespace NeuralChess.Engine
             100, 300, 300, 500, 900, 10000,
             100, 300, 300, 500, 900, 10000
         ];
+        private int NodesSearched;
+        private Stopwatch SearchTimer = Stopwatch.StartNew();
+        private int MaximumTime;
+        private bool TimeIsUp;
 
         public override void Play(Board board, int maximumTime, int maximumDepth)
         {
-            Stopwatch searchTimer = Stopwatch.StartNew();
+            SearchTimer.Restart();
+            NodesSearched = 0;
+            TimeIsUp = false;
 
             if (UseNNUE) NNUE.GenerateAccumulatorFromBoard(board);
 
@@ -28,8 +34,9 @@ namespace NeuralChess.Engine
             if (maximumTime == -1)
             {
                 toDepth = maximumDepth != -1 ? maximumDepth : MaxDepth;
-                maximumTime = int.MaxValue;
+                MaximumTime = int.MaxValue;
             }
+            else MaximumTime = maximumTime;
 
             List<Move> rootLegalMoves = [];
             foreach (Move move in pseudoLegalMoves)
@@ -67,7 +74,7 @@ namespace NeuralChess.Engine
 
                 foreach (Move move in rootLegalMoves)
                 {
-                    if (searchTimer.ElapsedMilliseconds > maximumTime)
+                    if (TimeIsUp)
                     {
                         abortSearch = true;
                         break;
@@ -110,7 +117,7 @@ namespace NeuralChess.Engine
             }
             Console.WriteLine($"bestmove {currentBestMove.ToUCI()}");
 
-            double timeTaken = searchTimer.ElapsedMilliseconds / 1000d;
+            double timeTaken = SearchTimer.ElapsedMilliseconds / 1000d;
             File.AppendAllText("log.txt", $"time taken: {timeTaken}\n");
             File.AppendAllText("log.txt", $"depth completed: {completedDepth}\n");
             if (UseNNUE) File.AppendAllText("log.txt", $"pre move NNUE evaluation: {(board.ActiveColour == aiColour ? NNUE.GetBoardValue(board.ActiveColour) : -NNUE.GetBoardValue(board.ActiveColour)) / 100d}\n");
@@ -129,6 +136,20 @@ namespace NeuralChess.Engine
 
         private int RecursiveMinMaxed(Board board, int depth, int aiColour, int multiplier, int alpha, int beta)
         {
+            NodesSearched++;
+
+            if ((NodesSearched & 2047) == 0)
+            {
+                if (SearchTimer.ElapsedMilliseconds >= MaximumTime)
+                {
+                    TimeIsUp = true;
+                }
+            }
+            if (TimeIsUp)
+            {
+                return 0;
+            }
+
             if (depth == 0)
             {
                 return QuiescenceSearch(board, aiColour, multiplier, alpha, beta);
