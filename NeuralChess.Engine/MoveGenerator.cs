@@ -983,10 +983,10 @@ namespace NeuralChess.Engine
                 int fromSquare = toSquare + offset;
                 if ((colour == Colour.White ? toSquare > 55 : toSquare < 8) && (piece == Piece.WhitePawn || piece == Piece.BlackPawn))
                 {
-                    moves[writeIndex++] = new Move(piece, fromSquare, toSquare, SpecialMove.PROMOTION) { PromotionPiece = Piece.WhiteQueen + colour * 6 };
-                    moves[writeIndex++] = new Move(piece, fromSquare, toSquare, SpecialMove.PROMOTION) { PromotionPiece = Piece.WhiteRook + colour * 6 };
-                    moves[writeIndex++] = new Move(piece, fromSquare, toSquare, SpecialMove.PROMOTION) { PromotionPiece = Piece.WhiteKnight + colour * 6 };
-                    moves[writeIndex++] = new Move(piece, fromSquare, toSquare, SpecialMove.PROMOTION) { PromotionPiece = Piece.WhiteBishop + colour * 6 };
+                    moves[writeIndex++] = new Move(piece, fromSquare, toSquare, SpecialMove.PROMOTION, Piece.WhiteQueen + colour * 6);
+                    moves[writeIndex++] = new Move(piece, fromSquare, toSquare, SpecialMove.PROMOTION, Piece.WhiteRook + colour * 6);
+                    moves[writeIndex++] = new Move(piece, fromSquare, toSquare, SpecialMove.PROMOTION, Piece.WhiteKnight + colour * 6);
+                    moves[writeIndex++] = new Move(piece, fromSquare, toSquare, SpecialMove.PROMOTION, Piece.WhiteBishop + colour * 6);
                 }
                 else
                 {

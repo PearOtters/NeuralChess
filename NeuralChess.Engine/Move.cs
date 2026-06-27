@@ -17,41 +17,30 @@ namespace NeuralChess.Engine
         DOUBLE_PUSH
     }
 
-    public struct Move
+    public struct Move(int selectedPiece, int fromSquare, int toSquare, SpecialMove special, int promotionPiece = -1) : IComparable<Move>
     {
-        internal int SelectedPiece;
-        internal int FromSquare;
-        internal int ToSquare;
-        internal SpecialMove Special;
+        internal int SelectedPiece = selectedPiece;
+        internal int FromSquare = fromSquare;
+        internal int ToSquare = toSquare;
+        internal SpecialMove Special = special;
+        internal int PromotionPiece = promotionPiece;
 
-        internal int PromotionPiece = -1;
         internal int CapturedPiece = -1;
         internal uint PrevCastleRights = 0;
         internal int PrevEnPassant = -1;
         internal int Score = 0;
 
-        internal readonly int MoveValue;
-
-        public Move(int selectedPiece, int fromSquare, int toSquare, SpecialMove special)
-        {
-            SelectedPiece = selectedPiece;
-            FromSquare = fromSquare;
-            ToSquare = toSquare;
-            Special = special;
-
-            MoveValue = ToInt();
-        }
+        internal readonly int MoveValue = fromSquare | (toSquare << 6) | ((int)special << 12) | (selectedPiece << 15) | (promotionPiece != -1 ? promotionPiece << 19 : 0);
 
         public Move(int move) : this((move >> 15) & 0xf, move & 0x3f, (move >> 6) & 0x3f, (SpecialMove)((move >> 12) & 0x7))
         {
             PromotionPiece = (move >> 19) & 0xf;
             if (PromotionPiece == 0) PromotionPiece = -1;
-            MoveValue = ToInt();
         }
 
-        public int ToInt()
+        public readonly int CompareTo(Move other)
         {
-            return FromSquare | (ToSquare << 6) | ((int)Special << 12) | (SelectedPiece << 15) | (PromotionPiece != -1 ? PromotionPiece << 19 : 0);
+            return other.Score.CompareTo(this.Score);
         }
 
         public void MovePiece(Board board)

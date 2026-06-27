@@ -6,11 +6,11 @@ namespace NeuralChess.Engine
 {
     public struct TTEntry()
     {
-        public ulong ZobristKey;
-        public int Move;
-        public short Score;
-        public byte Depth;
-        public byte NodeFlag;
+        public ulong ZobristKey = 0;
+        public int Move = 0;
+        public short Score = 0;
+        public byte Depth = 0;
+        public byte NodeFlag = 0;
 
         public TTEntry(ulong zobristKey, int move, short score, byte depth, byte nodeFlag) : this()
         {

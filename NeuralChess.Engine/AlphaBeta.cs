@@ -68,9 +68,9 @@ namespace NeuralChess.Engine
             {
                 bestDepth = tTEntry.Depth;
                 currentBestMove = new Move(tTEntry.Move);
-                OrderMoves(ref rootLegalMoves, legalMovesCount, board, currentBestMove.MoveValue);
+                OrderMoves(rootLegalMoves, legalMovesCount, board, currentBestMove.MoveValue);
             }
-            else OrderMoves(ref rootLegalMoves, legalMovesCount, board);
+            else OrderMoves(rootLegalMoves, legalMovesCount, board);
 
             int completedDepth = bestDepth;
 
@@ -84,7 +84,7 @@ namespace NeuralChess.Engine
 
                 if (depth > completedDepth)
                 {
-                    OrderMoves(ref rootLegalMoves, legalMovesCount, board, currentBestMove.MoveValue);
+                    OrderMoves(rootLegalMoves, legalMovesCount, board, currentBestMove.MoveValue);
                 }
 
                 for (int m = 0; m < legalMovesCount; m++)
@@ -167,7 +167,7 @@ namespace NeuralChess.Engine
             int pseudoLegalMovesCount = 0;
             MoveGenerator.GenerateAllMoves(board, ref pseudoLegalMoves, ref pseudoLegalMovesCount);
 
-            OrderMoves(ref pseudoLegalMoves, pseudoLegalMovesCount, board);
+            OrderMoves(pseudoLegalMoves, pseudoLegalMovesCount, board);
 
             int legalMoves = 0;
 
@@ -224,14 +224,14 @@ namespace NeuralChess.Engine
             return bestGain;
         }
 
-        private static void OrderMoves(ref Span<Move> moves, int movesCount, Board board, int hashMoveInt)
+        private static void OrderMoves(Span<Move> moves, int movesCount, Board board, int hashMoveInt = -1)
         {
             for (int m = 0; m < movesCount; m++)
             {
                 ref Move move = ref moves[m];
                 move.Score = 1;
 
-                if (move.MoveValue == hashMoveInt)
+                if (hashMoveInt != -1 && move.MoveValue == hashMoveInt)
                 {
                     move.Score = 2000000;
                     continue;
@@ -275,55 +275,7 @@ namespace NeuralChess.Engine
                 }
             }
 
-            moves.Sort((m1, m2) => m2.Score.CompareTo(m1.Score));
-        }
-
-        private static void OrderMoves(ref Span<Move> moves, int movesCount, Board board)
-        {
-            for (int m = 0; m < movesCount; m++)
-            {
-                ref Move move = ref moves[m];
-                move.Score = 1;
-
-                if (move.Special == SpecialMove.EN_PASSANT)
-                {
-                    move.Score = 900;
-                }
-
-                else
-                {
-                    ulong toSquareMask = 1UL << move.ToSquare;
-
-                    if ((board.AllPieces & toSquareMask) != 0)
-                    {
-                        int victimType = -1;
-
-                        int startEnemy = move.SelectedPiece < 6 ? 6 : 0;
-                        int endEnemy = move.SelectedPiece < 6 ? 12 : 6;
-
-                        for (int i = startEnemy; i < endEnemy; i++)
-                        {
-                            if ((board.Pieces[i] & toSquareMask) != 0)
-                            {
-                                victimType = i;
-                                break;
-                            }
-                        }
-
-                        if (victimType != -1)
-                        {
-                            move.Score = 10 * MVV_LVA_Values[victimType] - MVV_LVA_Values[move.SelectedPiece];
-                        }
-                    }
-                }
-
-                if (move.Special == SpecialMove.PROMOTION)
-                {
-                    move.Score += 9000;
-                }
-            }
-
-            moves.Sort((m1, m2) => m2.Score.CompareTo(m1.Score));
+            moves.Sort();
         }
 
         private int QuiescenceSearch(Board board, int aiColour, int multiplier, int alpha, int beta)
@@ -355,7 +307,7 @@ namespace NeuralChess.Engine
             int capturesCount = 0;
             MoveGenerator.GenerateAllCaptures(board, ref captures, ref capturesCount);
 
-            OrderMoves(ref captures, capturesCount, board);
+            OrderMoves(captures, capturesCount, board);
 
             for (int m = 0; m < capturesCount; m++)
             {
