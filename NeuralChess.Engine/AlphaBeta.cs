@@ -228,7 +228,7 @@ namespace NeuralChess.Engine
         {
             for (int m = 0; m < movesCount; m++)
             {
-                Move move = moves[m];
+                ref Move move = ref moves[m];
                 move.Score = 1;
 
                 if (move.MoveValue == hashMoveInt)
@@ -282,7 +282,7 @@ namespace NeuralChess.Engine
         {
             for (int m = 0; m < movesCount; m++)
             {
-                Move move = moves[m];
+                ref Move move = ref moves[m];
                 move.Score = 1;
 
                 if (move.Special == SpecialMove.EN_PASSANT)
