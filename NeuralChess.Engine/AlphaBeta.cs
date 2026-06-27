@@ -15,12 +15,12 @@ namespace NeuralChess.Engine
             100, 300, 300, 500, 900, 10000
         ];
         private int NodesSearched;
-        private Stopwatch SearchTimer = Stopwatch.StartNew();
+        private readonly Stopwatch SearchTimer = Stopwatch.StartNew();
         private int MaximumTime;
         private bool TimeIsUp;
         private const int TTSize = 16_777_216;
         private const int TTMask = TTSize - 1;
-        private static TTEntry[] TranspositionTable = new TTEntry[TTSize];
+        private static readonly TTEntry[] TranspositionTable = new TTEntry[TTSize];
 
         public override void Play(Board board, int maximumTime, int maximumDepth)
         {
@@ -30,11 +30,6 @@ namespace NeuralChess.Engine
 
             if (UseNNUE) NNUE.GenerateAccumulatorFromBoard(board);
 
-
-            Span<Move> pseudoLegalMoves = stackalloc Move[218];
-            int pseudoLegalMovesCount = 0;
-            MoveGenerator.GenerateAllMoves(board, ref pseudoLegalMoves, ref pseudoLegalMovesCount);
-
             int toDepth = int.MaxValue;
             if (maximumTime == -1)
             {
@@ -43,19 +38,24 @@ namespace NeuralChess.Engine
             }
             else MaximumTime = maximumTime;
 
+            Span<Move> pseudoLegalMoves = stackalloc Move[218];
+            int pseudoLegalMovesCount = 0;
+            MoveGenerator.GenerateAllMoves(board, ref pseudoLegalMoves, ref pseudoLegalMovesCount);
+            pseudoLegalMoves = pseudoLegalMoves[..pseudoLegalMovesCount];
+
             Span<Move> rootLegalMoves = stackalloc Move[218];
             int legalMovesCount = 0;
-            for (int i = 0; i < pseudoLegalMovesCount; i++)
+            for (int i = 0; i < pseudoLegalMoves.Length; i++)
             {
                 if (pseudoLegalMoves[i].IsLegal(board)) rootLegalMoves[legalMovesCount++] = pseudoLegalMoves[i];
             }
-
             if (legalMovesCount == 0)
             {
                 Console.WriteLine("bestmove (none)");
                 return;
             }
 
+            rootLegalMoves = rootLegalMoves[..legalMovesCount];
             Move currentBestMove = rootLegalMoves[0];
 
             int aiColour = board.ActiveColour;
@@ -68,9 +68,9 @@ namespace NeuralChess.Engine
             {
                 bestDepth = tTEntry.Depth;
                 currentBestMove = new Move(tTEntry.Move);
-                OrderMoves(rootLegalMoves, legalMovesCount, board, currentBestMove.MoveValue);
+                OrderMoves(rootLegalMoves, board, currentBestMove.MoveValue);
             }
-            else OrderMoves(rootLegalMoves, legalMovesCount, board);
+            else OrderMoves(rootLegalMoves, board);
 
             int completedDepth = bestDepth;
 
@@ -84,10 +84,10 @@ namespace NeuralChess.Engine
 
                 if (depth > completedDepth)
                 {
-                    OrderMoves(rootLegalMoves, legalMovesCount, board, currentBestMove.MoveValue);
+                    OrderMoves(rootLegalMoves, board, currentBestMove.MoveValue);
                 }
 
-                for (int m = 0; m < legalMovesCount; m++)
+                for (int m = 0; m < rootLegalMoves.Length; m++)
                 {
                     Move move = rootLegalMoves[m];
                     if (TimeIsUp) break;
@@ -166,8 +166,9 @@ namespace NeuralChess.Engine
             Span<Move> pseudoLegalMoves = stackalloc Move[218];
             int pseudoLegalMovesCount = 0;
             MoveGenerator.GenerateAllMoves(board, ref pseudoLegalMoves, ref pseudoLegalMovesCount);
+            pseudoLegalMoves = pseudoLegalMoves[..pseudoLegalMovesCount];
 
-            OrderMoves(pseudoLegalMoves, pseudoLegalMovesCount, board);
+            OrderMoves(pseudoLegalMoves, board);
 
             int legalMoves = 0;
 
@@ -224,12 +225,12 @@ namespace NeuralChess.Engine
             return bestGain;
         }
 
-        private static void OrderMoves(Span<Move> moves, int movesCount, Board board, int hashMoveInt = -1)
+        private static void OrderMoves(Span<Move> moves, Board board, int hashMoveInt = -1)
         {
-            for (int m = 0; m < movesCount; m++)
+            for (int m = 0; m < moves.Length; m++)
             {
                 ref Move move = ref moves[m];
-                move.Score = 1;
+                move.Score = 0;
 
                 if (hashMoveInt != -1 && move.MoveValue == hashMoveInt)
                 {
@@ -241,7 +242,6 @@ namespace NeuralChess.Engine
                 {
                     move.Score = 900;
                 }
-
                 else
                 {
                     ulong toSquareMask = 1UL << move.ToSquare;
@@ -306,10 +306,11 @@ namespace NeuralChess.Engine
             Span<Move> captures = stackalloc Move[79];
             int capturesCount = 0;
             MoveGenerator.GenerateAllCaptures(board, ref captures, ref capturesCount);
+            captures = captures[..capturesCount];
 
-            OrderMoves(captures, capturesCount, board);
+            OrderMoves(captures, board);
 
-            for (int m = 0; m < capturesCount; m++)
+            for (int m = 0; m < captures.Length; m++)
             {
                 Move move = captures[m];
                 if (move.IsLegal(board))
