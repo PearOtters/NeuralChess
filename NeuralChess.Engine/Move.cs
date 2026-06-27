@@ -48,7 +48,6 @@ namespace NeuralChess.Engine
             PrevCastleRights = board.CastleRights;
             PrevEnPassant = board.EnPassantSquare;
             board.EnPassantSquare = -1;
-            CapturedPiece = -1;
 
             int movingColour = SelectedPiece < 6 ? Colour.White : Colour.Black;
             int enemyColour = movingColour == Colour.White ? Colour.Black : Colour.White;
@@ -58,22 +57,25 @@ namespace NeuralChess.Engine
 
             if (Special != SpecialMove.EN_PASSANT && (board.AllPieces & toMask) != 0)
             {
-                int startIdx = movingColour == Colour.White ? 6 : 0;
-                int endIdx = movingColour == Colour.White ? 12 : 6;
-
-                for (int i = startIdx; i < endIdx; i++)
+                if (CapturedPiece == -1)
                 {
-                    if ((board.Pieces[i] & toMask) != 0)
+                    int startIdx = movingColour == Colour.White ? 6 : 0;
+                    int endIdx = movingColour == Colour.White ? 12 : 6;
+
+                    for (int i = startIdx; i < endIdx; i++)
                     {
-                        board.Pieces[i] ^= toMask;
-                        CapturedPiece = i;
-                        board.ZobristHash ^= Zobrist.PieceKeys[CapturedPiece, ToSquare];
-                        break;
+                        if ((board.Pieces[i] & toMask) != 0)
+                        {
+                            CapturedPiece = i;
+                            break;
+                        }
                     }
                 }
 
+                board.Pieces[CapturedPiece] ^= toMask;
                 board.Colours[enemyColour] ^= toMask;
                 board.AllPieces ^= toMask;
+                board.ZobristHash ^= Zobrist.PieceKeys[CapturedPiece, ToSquare];
             }
 
             if (Special == SpecialMove.EN_PASSANT)
@@ -161,7 +163,7 @@ namespace NeuralChess.Engine
             board.ZobristHash ^= Zobrist.SideToMove;
         }
 
-        public void ReverseMove(Board board)
+        public readonly void ReverseMove(Board board)
         {
             int movingColour = SelectedPiece < 6 ? Colour.White : Colour.Black;
 
@@ -244,7 +246,7 @@ namespace NeuralChess.Engine
             board.EnPassantSquare = PrevEnPassant;
         }
 
-        public string ToUCI()
+        public readonly string ToUCI()
         {
             char fromFile = (char)('a' + (FromSquare % 8));
             char fromRank = (char)('1' + (FromSquare / 8));

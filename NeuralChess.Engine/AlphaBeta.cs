@@ -264,6 +264,7 @@ namespace NeuralChess.Engine
 
                         if (victimType != -1)
                         {
+                            move.CapturedPiece = victimType;
                             move.Score = 10 * MVV_LVA_Values[victimType] - MVV_LVA_Values[move.SelectedPiece];
                         }
                     }
