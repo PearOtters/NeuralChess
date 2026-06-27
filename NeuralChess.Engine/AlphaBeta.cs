@@ -22,6 +22,14 @@ namespace NeuralChess.Engine
         private const int TTMask = TTSize - 1;
         private static readonly TTEntry[] TranspositionTable = new TTEntry[TTSize];
 
+        public static void Initialise()
+        {
+            for (int i = 0; i < TTSize; i++)
+            {
+                TranspositionTable[i] = new TTEntry();
+            }
+        }
+
         public override void Play(Board board, int maximumTime, int maximumDepth)
         {
             SearchTimer.Restart();

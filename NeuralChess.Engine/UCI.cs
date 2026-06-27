@@ -28,6 +28,7 @@ namespace NeuralChess.Engine
                 {
                     NNUE.Initialise();
                     Zobrist.Initialise();
+                    AlphaBeta.Initialise();
                     Console.WriteLine("readyok");
                 }
                 else if (command == "position")
