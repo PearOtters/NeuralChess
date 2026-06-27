@@ -13,18 +13,22 @@ namespace NeuralChess.Engine
 
         public override void Play(Board board, int maximumTime, int maximumDepth)
         {
-            List<Move> pseudoMoves = MoveGenerator.GenerateAllMoves(board);
-            List<Move> legalMoves = [];
+            Span<Move> pseudoMoves = stackalloc Move[218];
+            int pseudoMovesCount = 0;
+            MoveGenerator.GenerateAllMoves(board, ref pseudoMoves, ref pseudoMovesCount);
+            Span<Move> legalMoves = stackalloc Move[218];
+            int legalMovesCount = 0;
 
-            foreach (Move m in pseudoMoves)
+            for (int i = 0; i < pseudoMovesCount; i++)
             {
-                if (m.IsLegal(board)) legalMoves.Add(m);
+                Move m = pseudoMoves[i];
+                if (m.IsLegal(board)) legalMoves[legalMovesCount++] = m;
             }
 
-            if (legalMoves.Count > 0)
+            if (legalMovesCount > 0)
             {
                 Random rng = new();
-                Move bestMove = legalMoves[rng.Next(legalMoves.Count)];
+                Move bestMove = legalMoves[rng.Next(legalMovesCount)];
                 Console.WriteLine($"bestmove {bestMove.ToUCI()}");
             }
             else

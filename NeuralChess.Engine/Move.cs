@@ -6,6 +6,8 @@ using System.Text;
 
 namespace NeuralChess.Engine
 {
+    public class IllegalMoveException(string message) : Exception(message) { }
+
     public enum SpecialMove
     {
         NONE,
@@ -15,7 +17,7 @@ namespace NeuralChess.Engine
         DOUBLE_PUSH
     }
 
-    public class Move
+    public struct Move
     {
         internal int SelectedPiece;
         internal int FromSquare;
@@ -294,13 +296,22 @@ namespace NeuralChess.Engine
                 else if (promPiece == 'n') promotionPiece = Piece.WhiteKnight + board.ActiveColour * 6;
                 else if (promPiece == 'b') promotionPiece = Piece.WhiteBishop + board.ActiveColour * 6;
             }
+            Span<Move> legalMoves = stackalloc Move[218];
+            int finalIndex = 0;
+            MoveGenerator.GenerateAllMoves(board, ref legalMoves, ref finalIndex);
 
-            List<Move> legalMoves = MoveGenerator.GenerateAllMoves(board);
+            for (int i = 0; i < finalIndex; i++)
+            {
+                Move m = legalMoves[i];
 
-            return legalMoves.First(m =>
-                m.FromSquare == fromSquare &&
-                m.ToSquare == toSquare &&
-                m.PromotionPiece == promotionPiece);
+                if (m.FromSquare == fromSquare &&
+                    m.ToSquare == toSquare &&
+                    m.PromotionPiece == promotionPiece)
+                {
+                    return m;
+                }
+            }
+            throw new IllegalMoveException("Given move was found to be illegal");
         }
 
         public bool IsLegal(Board board)

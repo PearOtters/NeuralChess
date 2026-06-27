@@ -372,7 +372,10 @@ namespace NeuralChess.Engine
         {
             int kingSquare = BitOperations.TrailingZeroCount(Pieces[Piece.WhiteKing + ActiveColour * 6]);
             if (IsSquareAttacked(kingSquare, ActiveColour ^ 1)) return false;
-            return MoveGenerator.GenerateAllCaptures(this).Count == 0;
+            Span<Move> moves = stackalloc Move[79];
+            int numOfMoves = 0;
+            MoveGenerator.GenerateAllCaptures(this, ref moves, ref numOfMoves);
+            return numOfMoves == 0;
         }
 
         public string ToFEN()

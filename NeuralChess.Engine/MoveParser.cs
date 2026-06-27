@@ -38,13 +38,22 @@ namespace NeuralChess.Engine
             int fromSquare = (fromRank - '1') * 8 + (fromFile - 'A');
             int toSquare = (toRank - '1') * 8 + (toFile - 'A');
 
-            List<Move> moves = MoveGenerator.GenerateAllMoves(board);
-            Move? validMove = moves.FirstOrDefault(m => m.ToSquare == toSquare && m.FromSquare == fromSquare && m.PromotionPiece == promotionPiece);
+            Span<Move> moves = stackalloc Move[218];
+            int movesCount = 0;
+            MoveGenerator.GenerateAllMoves(board, ref moves, ref movesCount);
+            Move? validMove = null;
+            for (int i = 0; i < movesCount; i++)
+            {
+                Move m = moves[i];
 
-            if (validMove == null) return false;
-            if (!validMove.IsLegal(board)) return false;
+                if (m.FromSquare == fromSquare && m.ToSquare == toSquare && m.PromotionPiece == promotionPiece)
+                {
+                    validMove = m;
+                }
+            }
+            if (!validMove.HasValue || !validMove.Value.IsLegal(board)) return false;
 
-            validMove.MovePiece(board);
+            validMove.Value.MovePiece(board);
             board.ActiveColour = board.ActiveColour == Colour.White ? Colour.Black : Colour.White;
 
             return true;
