@@ -160,15 +160,34 @@ namespace NeuralChess.Engine
                 return QuiescenceSearch(board, aiColour, multiplier, alpha, beta);
             }
 
+            int hashMoveInt = -1;
+            TTEntry tTEntry = TranspositionTable[board.ZobristHash & TTMask];
+
+            if (tTEntry.ZobristKey == board.ZobristHash)
+            {
+                hashMoveInt = tTEntry.Move;
+
+                if (tTEntry.Depth >= depth)
+                {
+                    if (tTEntry.NodeFlag == 0) return tTEntry.Score;
+                    if (tTEntry.NodeFlag == 1 && tTEntry.Score <= alpha) return tTEntry.Score;
+                    if (tTEntry.NodeFlag == 2 && tTEntry.Score >= beta) return tTEntry.Score;
+                }
+            }
+
             bool isMaximising = (aiColour == board.ActiveColour);
             int bestGain = aiColour == board.ActiveColour ? int.MinValue : int.MaxValue;
+
+            int originalAlpha = alpha;
+            int originalBeta = beta;
+            int bestMoveInt = hashMoveInt;
 
             Span<Move> pseudoLegalMoves = stackalloc Move[218];
             int pseudoLegalMovesCount = 0;
             MoveGenerator.GenerateAllMoves(board, ref pseudoLegalMoves, ref pseudoLegalMovesCount);
             pseudoLegalMoves = pseudoLegalMoves[..pseudoLegalMovesCount];
 
-            OrderMoves(pseudoLegalMoves, board);
+            OrderMoves(pseudoLegalMoves, board, hashMoveInt);
 
             int legalMoves = 0;
 
@@ -189,14 +208,24 @@ namespace NeuralChess.Engine
                     move.ReverseMove(board);
                     if (UseNNUE) NNUE.ReverseAccumulator(move);
 
+                    if (TimeIsUp) return 0;
+
                     if (isMaximising)
                     {
-                        bestGain = Math.Max(moveValue, bestGain);
+                        if (moveValue > bestGain)
+                        {
+                            bestGain = moveValue;
+                            bestMoveInt = move.MoveValue;
+                        }
                         alpha = Math.Max(alpha, bestGain);
                     }
                     else
                     {
-                        bestGain = Math.Min(moveValue, bestGain);
+                        if (moveValue < bestGain)
+                        {
+                            bestGain = moveValue;
+                            bestMoveInt = move.MoveValue;
+                        }
                         beta = Math.Min(beta, bestGain);
                     }
 
@@ -220,6 +249,16 @@ namespace NeuralChess.Engine
                 {
                     return 0;
                 }
+            }
+
+            byte ttFlag = 0;
+
+            if (bestGain <= originalAlpha) ttFlag = 1;
+            else if (bestGain >= originalBeta) ttFlag = 2;
+
+            if (bestMoveInt != -1)
+            {
+                TranspositionTable[board.ZobristHash & TTMask] = new TTEntry(board.ZobristHash, bestMoveInt, (short)bestGain, (byte)depth, ttFlag);
             }
 
             return bestGain;
