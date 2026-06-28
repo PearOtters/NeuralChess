@@ -76,6 +76,7 @@ namespace NeuralChess.Engine
                 board.Colours[enemyColour] ^= toMask;
                 board.AllPieces ^= toMask;
                 board.ZobristHash ^= Zobrist.PieceKeys[CapturedPiece, ToSquare];
+                board.totalPieces--;
             }
 
             if (Special == SpecialMove.EN_PASSANT)
@@ -88,6 +89,7 @@ namespace NeuralChess.Engine
                 board.Colours[enemyColour] ^= epMask;
                 board.AllPieces ^= epMask;
                 board.ZobristHash ^= Zobrist.PieceKeys[CapturedPiece, capturedPawnSquare];
+                board.totalPieces--;
             }
 
             board.Pieces[SelectedPiece] ^= fromMask;
@@ -199,6 +201,7 @@ namespace NeuralChess.Engine
                 board.Colours[capturedColour] |= capturedMask;
                 board.AllPieces |= capturedMask;
                 board.ZobristHash ^= Zobrist.PieceKeys[CapturedPiece, capturedSquare];
+                board.totalPieces++;
             }
 
             if (Special == SpecialMove.CASTLE)

@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Numerics;
-using System.Text;
 
 namespace NeuralChess.Engine
 {
@@ -18,7 +15,7 @@ namespace NeuralChess.Engine
         private readonly Stopwatch SearchTimer = Stopwatch.StartNew();
         private int MaximumTime;
         private bool TimeIsUp;
-        private const int TTSize = 16_777_216;
+        private const int TTSize = 16_777_216 * 2;
         private const int TTMask = TTSize - 1;
         private static readonly TTEntry[] TranspositionTable = new TTEntry[TTSize];
 
@@ -35,6 +32,59 @@ namespace NeuralChess.Engine
             SearchTimer.Restart();
             NodesSearched = 0;
             TimeIsUp = false;
+
+            if (board.totalPieces < 8)
+            {
+                SyzygyResponse? syzygyResponse = SyzygyAPI.ProbePositionAsync(board.ToFEN()).GetAwaiter().GetResult();
+                if (syzygyResponse != null && syzygyResponse.Moves.Length > 0)
+                {
+                    string bestMove = syzygyResponse.Moves[0].Uci;
+
+                    if (syzygyResponse.Wdl <= 0)
+                    {
+                        int biggestWasteOfTime = -1;
+                        
+                        for (int i = 0; i < syzygyResponse.Moves.Length; i++)
+                        {
+                            SyzygyMove move = syzygyResponse.Moves[i];
+                            
+                            if (move.Wdl == syzygyResponse.Wdl)
+                            {
+                                int absoluteDtz = Math.Abs(move.Dtz);
+                                
+                                if (absoluteDtz > biggestWasteOfTime)
+                                {
+                                    biggestWasteOfTime = absoluteDtz;
+                                    bestMove = move.Uci;
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        int smallestWasteOfTime = int.MaxValue;
+                        
+                        for (int i = 0; i < syzygyResponse.Moves.Length; i++)
+                        {
+                            SyzygyMove move = syzygyResponse.Moves[i];
+                            
+                            if (move.Wdl == syzygyResponse.Wdl)
+                            {
+                                int absoluteDtz = Math.Abs(move.Dtz);
+                                
+                                if (absoluteDtz < smallestWasteOfTime)
+                                {
+                                    smallestWasteOfTime = absoluteDtz;
+                                    bestMove = move.Uci;
+                                }
+                            }
+                        }
+                    }
+
+                    Console.WriteLine($"bestmove {bestMove}");
+                    return;
+                }
+            }
 
             if (UseNNUE) NNUE.GenerateAccumulatorFromBoard(board);
 

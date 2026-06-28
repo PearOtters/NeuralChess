@@ -45,6 +45,7 @@ namespace NeuralChess.Engine
         public int ActiveColour = Colour.White;
         public int EnPassantSquare = -1;
         public ulong ZobristHash;
+        public int totalPieces;
 
         private static readonly Dictionary<char, int> PieceMap = new()
         {
@@ -170,7 +171,7 @@ namespace NeuralChess.Engine
 
                     Pieces[pieceType] |= (1UL << squareIndex);
                     ZobristHash ^= Zobrist.PieceKeys[pieceType, squareIndex];
-
+                    totalPieces++;
                     file++;
                 }
             }
