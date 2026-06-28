@@ -69,7 +69,7 @@ namespace NeuralChess.Engine
             int aiColour = board.ActiveColour;
             int multiplier = board.ActiveColour == Colour.White ? 1 : -1;
 
-            int bestDepth = 0;
+            byte bestDepth = 0;
 
             TTEntry tTEntry = TranspositionTable[board.ZobristHash & (TTMask)];
             if (tTEntry.ZobristKey == board.ZobristHash)
@@ -82,7 +82,7 @@ namespace NeuralChess.Engine
 
             int completedDepth = bestDepth;
 
-            for (byte depth = 1; depth <= toDepth; depth++)
+            for (int depth = 1; depth <= toDepth; depth++)
             {
                 Move depthBestMove = rootLegalMoves[0];
                 int bestGain = int.MinValue;
@@ -125,7 +125,17 @@ namespace NeuralChess.Engine
                 {
                     currentBestMove = depthBestMove;
                     completedDepth = depth;
-                    TranspositionTable[board.ZobristHash & TTMask] = new TTEntry(board.ZobristHash, depthBestMove.MoveValue, (short)bestGain, depth, 0);
+                    ref TTEntry newTTEntry = ref TranspositionTable[board.ZobristHash & TTMask];
+                    if ((newTTEntry.NodeFlag >> 2) != IrreversibleTurn || newTTEntry.Depth < completedDepth)
+                    {
+                        newTTEntry = newTTEntry with {
+                            Depth = (byte)completedDepth,
+                            ZobristKey = board.ZobristHash,
+                            Move = depthBestMove.MoveValue,
+                            NodeFlag = (byte)(IrreversibleTurn << 2),
+                            Score = (short)bestGain
+                        };
+                    }
                 }
             }
             Console.WriteLine($"bestmove {currentBestMove.ToUCI()}");
@@ -177,9 +187,10 @@ namespace NeuralChess.Engine
 
                 if (tTEntry.Depth >= depth)
                 {
-                    if (tTEntry.NodeFlag == 0) return tTEntry.Score;
-                    if (tTEntry.NodeFlag == 1 && tTEntry.Score <= alpha) return tTEntry.Score;
-                    if (tTEntry.NodeFlag == 2 && tTEntry.Score >= beta) return tTEntry.Score;
+                    int cachedFlag = tTEntry.NodeFlag & 0x3;
+                    if (cachedFlag == 0) return tTEntry.Score;
+                    if (cachedFlag == 1 && tTEntry.Score <= alpha) return tTEntry.Score;
+                    if (cachedFlag == 2 && tTEntry.Score >= beta) return tTEntry.Score;
                 }
             }
 
@@ -266,7 +277,17 @@ namespace NeuralChess.Engine
 
             if (bestMoveInt != -1)
             {
-                TranspositionTable[board.ZobristHash & TTMask] = new TTEntry(board.ZobristHash, bestMoveInt, (short)bestGain, (byte)depth, ttFlag);
+                ref TTEntry newTTEntry = ref TranspositionTable[board.ZobristHash & TTMask];
+                if ((newTTEntry.NodeFlag >> 2) != IrreversibleTurn || newTTEntry.Depth < depth)
+                {
+                    newTTEntry = newTTEntry with {
+                        Depth = (byte)depth,
+                        ZobristKey = board.ZobristHash,
+                        Move = bestMoveInt,
+                        NodeFlag = (byte)((IrreversibleTurn << 2) | ttFlag),
+                        Score = (short)bestGain
+                    };
+                }
             }
 
             return bestGain;

@@ -1,14 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.IO;
 
 namespace NeuralChess.Engine
 {
     public static class UCI
     {
+        private static Engine LoadedEngine = new RandomMove();
         public static void Loop(Engine engine, bool toLog)
         {
             Board board = new(Constants.regular_start);
+            LoadedEngine = engine;
 
             while (true)
             {
@@ -66,6 +69,7 @@ namespace NeuralChess.Engine
 
         private static void ParsePosition(ref Board board, string[] tokens)
         {
+            byte irreversibleTurn = 1;
             int moveIndex = -1;
 
             if (tokens.Length > 1 && tokens[1] == "startpos")
@@ -87,8 +91,11 @@ namespace NeuralChess.Engine
                 {
                     Move move = Move.GetMoveFromUCI(board, tokens[i]);
                     move.MovePiece(board);
+                    if (move.CapturedPiece != -1 || move.SelectedPiece == (Piece.WhitePawn % 6)) irreversibleTurn++;
                     board.ActiveColour ^= 1;
                 }
+                irreversibleTurn = (byte)((irreversibleTurn % 63) + 1);
+                LoadedEngine.IrreversibleTurn = irreversibleTurn;
             }
         }
     }
