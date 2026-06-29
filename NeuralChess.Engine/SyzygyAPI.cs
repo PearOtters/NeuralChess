@@ -1,4 +1,5 @@
 using System;
+using System.Formats.Asn1;
 using System.Net.Http;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -40,14 +41,74 @@ namespace NeuralChess.Engine
 
     public class SyzygyResponse
     {
-        [JsonPropertyName("wdl")]
-        public int Wdl { get; set; }
+        [JsonPropertyName("category")]
+        public required string Category { get; set; }
 
         [JsonPropertyName("dtz")]
         public int Dtz { get; set; }
         
         [JsonPropertyName("moves")]
         public required SyzygyMove[] Moves { get; set; }
+
+        public int Wdl => Category switch
+        {
+            "win" => 2,
+            "cursed-win" => 1,
+            "draw" => 0,
+            "blessed-loss" => -1,
+            "loss" => -2,
+            _ => 0
+        };
+
+        public SyzygyMove? GetBestMove()
+        {
+            if (Moves.Length == 0) return null;
+            SyzygyMove bestMove = Moves[0];
+
+            int rootWdl = Wdl; 
+
+            if (rootWdl <= 0)
+            {
+                int biggestWasteOfTime = -1;
+                
+                for (int i = 0; i < Moves.Length; i++)
+                {
+                    SyzygyMove move = Moves[i];
+                    
+                    if (move.Wdl == rootWdl)
+                    {
+                        int absoluteDtz = Math.Abs(move.Dtz);
+                        
+                        if (absoluteDtz > biggestWasteOfTime)
+                        {
+                            biggestWasteOfTime = absoluteDtz;
+                            bestMove = move;
+                        }
+                    }
+                }
+            }
+            else
+            {
+                int smallestWasteOfTime = int.MaxValue;
+                
+                for (int i = 0; i < Moves.Length; i++)
+                {
+                    SyzygyMove move = Moves[i];
+                    
+                    if (move.Wdl == rootWdl)
+                    {
+                        int absoluteDtz = Math.Abs(move.Dtz);
+                        
+                        if (absoluteDtz < smallestWasteOfTime)
+                        {
+                            smallestWasteOfTime = absoluteDtz;
+                            bestMove = move;
+                        }
+                    }
+                }
+            }
+            return bestMove;
+        }
     }
 
     public class SyzygyMove
@@ -55,10 +116,20 @@ namespace NeuralChess.Engine
         [JsonPropertyName("uci")]
         public required string Uci { get; set; }
 
-        [JsonPropertyName("wdl")]
-        public int Wdl { get; set; }
+        [JsonPropertyName("category")]
+        public required string Category { get; set; }
 
         [JsonPropertyName("dtz")]
         public int Dtz { get; set; }
+
+        public int Wdl => Category switch
+        {
+            "win" => -2,
+            "cursed-win" => -1,
+            "draw" => 0,
+            "blessed-loss" => 1,
+            "loss" => 2,
+            _ => 0
+        };
     }
 }

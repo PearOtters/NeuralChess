@@ -36,53 +36,14 @@ namespace NeuralChess.Engine
             if (board.totalPieces < 8)
             {
                 SyzygyResponse? syzygyResponse = SyzygyAPI.ProbePositionAsync(board.ToFEN()).GetAwaiter().GetResult();
-                if (syzygyResponse != null && syzygyResponse.Moves.Length > 0)
+                if (syzygyResponse != null)
                 {
-                    string bestMove = syzygyResponse.Moves[0].Uci;
-
-                    if (syzygyResponse.Wdl <= 0)
+                    SyzygyMove? bestMove = syzygyResponse.GetBestMove();
+                    if (bestMove != null)
                     {
-                        int biggestWasteOfTime = -1;
-                        
-                        for (int i = 0; i < syzygyResponse.Moves.Length; i++)
-                        {
-                            SyzygyMove move = syzygyResponse.Moves[i];
-                            
-                            if (move.Wdl == syzygyResponse.Wdl)
-                            {
-                                int absoluteDtz = Math.Abs(move.Dtz);
-                                
-                                if (absoluteDtz > biggestWasteOfTime)
-                                {
-                                    biggestWasteOfTime = absoluteDtz;
-                                    bestMove = move.Uci;
-                                }
-                            }
-                        }
+                        Console.WriteLine($"bestmove {bestMove.Uci}");
+                        return;
                     }
-                    else
-                    {
-                        int smallestWasteOfTime = int.MaxValue;
-                        
-                        for (int i = 0; i < syzygyResponse.Moves.Length; i++)
-                        {
-                            SyzygyMove move = syzygyResponse.Moves[i];
-                            
-                            if (move.Wdl == syzygyResponse.Wdl)
-                            {
-                                int absoluteDtz = Math.Abs(move.Dtz);
-                                
-                                if (absoluteDtz < smallestWasteOfTime)
-                                {
-                                    smallestWasteOfTime = absoluteDtz;
-                                    bestMove = move.Uci;
-                                }
-                            }
-                        }
-                    }
-
-                    Console.WriteLine($"bestmove {bestMove}");
-                    return;
                 }
             }
 
