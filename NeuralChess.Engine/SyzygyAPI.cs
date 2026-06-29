@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 
 namespace NeuralChess.Engine
 {
+    public class UnexpectedCategoryException(string? message) : Exception(message) { }
     public static class SyzygyAPI
     {
         private static readonly HttpClient client = new HttpClient();
@@ -57,7 +58,7 @@ namespace NeuralChess.Engine
             "draw" => 0,
             "blessed-loss" => -1,
             "loss" => -2,
-            _ => 0
+            _ => throw new UnexpectedCategoryException($"Unexpected category received from API call got {Category}")
         };
 
         public SyzygyMove? GetBestMove()
@@ -129,7 +130,8 @@ namespace NeuralChess.Engine
             "draw" => 0,
             "blessed-loss" => 1,
             "loss" => 2,
-            _ => 0
+            _ => throw new UnexpectedCategoryException($"Unexpected category received from API call got {Category}")
+
         };
     }
 }
