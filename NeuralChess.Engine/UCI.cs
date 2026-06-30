@@ -89,7 +89,7 @@ namespace NeuralChess.Engine
                 Console.WriteLine(response);
                 if (toLog && response != "")
                 {
-                    File.AppendAllText("log.txt", response + "\n");
+                    File.AppendAllText("log.txt", response + "\n\n");
                 }
             }
         }

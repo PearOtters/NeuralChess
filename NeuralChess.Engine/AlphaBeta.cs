@@ -58,7 +58,7 @@ namespace NeuralChess.Engine
                             if (UseNNUE) NNUE.UpdateAccumulator(move);
                             if (UseNNUE) File.AppendAllText("log.txt", $"post move NNUE evaluation: {-NNUE.GetBoardValue(board.ActiveColour) / 100d}\n");
                             File.AppendAllText("log.txt", $"post move neural network evaluation: {NeuralNetworkHandler.GetBoardValue(board, board.ActiveColour ^ 1) / 100d}\n");
-                            File.AppendAllText("log.txt", $"post move static evaluation: {board.GetBoardValue() * tempMultiplier / 100d}\n\n");
+                            File.AppendAllText("log.txt", $"post move static evaluation: {board.GetBoardValue() * tempMultiplier / 100d}\n");
                             move.ReverseMove(board);
                             board.ActiveColour ^= 1;
                             if (UseNNUE) NNUE.ReverseAccumulator(move);
@@ -184,7 +184,7 @@ namespace NeuralChess.Engine
                 if (UseNNUE) NNUE.UpdateAccumulator(currentBestMove);
                 if (UseNNUE) File.AppendAllText("log.txt", $"post move NNUE evaluation: {-NNUE.GetBoardValue(board.ActiveColour) / 100d}\n");
                 File.AppendAllText("log.txt", $"post move neural network evaluation: {NeuralNetworkHandler.GetBoardValue(board, aiColour) / 100d}\n");
-                File.AppendAllText("log.txt", $"post move static evaluation: {board.GetBoardValue() * multiplier / 100d}\n\n");
+                File.AppendAllText("log.txt", $"post move static evaluation: {board.GetBoardValue() * multiplier / 100d}\n");
                 currentBestMove.ReverseMove(board);
                 board.ActiveColour ^= 1;
                 if (UseNNUE) NNUE.ReverseAccumulator(currentBestMove);
