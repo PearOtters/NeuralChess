@@ -17,7 +17,10 @@ namespace NeuralChess.Engine
             {
                 string? input = Console.ReadLine();
                 if (string.IsNullOrWhiteSpace(input)) continue;
-
+                if (toLog)
+                {
+                    File.AppendAllText("log.txt", input + "\n");
+                }
                 string[] tokens = input.Split(' ', StringSplitOptions.RemoveEmptyEntries);
                 string command = tokens[0].ToLower();
 
@@ -25,6 +28,7 @@ namespace NeuralChess.Engine
                 {
                     Console.WriteLine($"id name {engine.Name}");
                     Console.WriteLine("id author Pierre Outters");
+                    Console.WriteLine("option name SyzygyPath type string default <empty>");
                     Console.WriteLine("uciok");
                 }
                 else if (command == "isready")
@@ -54,11 +58,35 @@ namespace NeuralChess.Engine
                     {
                         maximumDepth = int.Parse(tokens[maxDepthIndex + 1]);
                     }
-                    if (toLog)
-                    {
-                        File.AppendAllText("log.txt", input + "\n");
-                    }
                     engine.Play(board, maximumTime, maximumDepth);
+                }
+                else if (command == "setoption")
+                {
+                    if (tokens.Contains("SyzygyPath"))
+                    {
+                        int nameIndex = Array.IndexOf(tokens, "name");
+                        int valueIndex = Array.IndexOf(tokens, "value");
+
+                        if (nameIndex != -1 && valueIndex != -1)
+                        {
+                            string optionName = tokens[nameIndex + 1];
+                            
+                            if (optionName.Equals("SyzygyPath", StringComparison.OrdinalIgnoreCase))
+                            {
+                                string tbPath = string.Join(" ", tokens.Skip(valueIndex + 1));
+                                
+                                bool success = SyzygyLocal.tb_init(tbPath);
+                                if (success)
+                                {
+                                    Console.WriteLine($"info string Syzygy tablebases successfully loaded from {tbPath}");
+                                }
+                                else
+                                {
+                                    Console.WriteLine("info string Warning: Failed to load Syzygy tablebases from provided path.");
+                                }
+                            }
+                        }
+                    }
                 }
                 else if (command == "quit")
                 {
