@@ -339,6 +339,11 @@ namespace NeuralChess.Engine
             return false;
         }
 
+        public bool IsInCheck(int defendingColour)
+        {
+            return IsSquareAttacked(BitOperations.TrailingZeroCount(Pieces[Piece.WhiteKing + 6 * defendingColour]), defendingColour ^ 1);
+        }
+
         public int GetBoardValue()
         {
             int totalValue = 0;

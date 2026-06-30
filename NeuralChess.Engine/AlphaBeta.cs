@@ -383,34 +383,49 @@ namespace NeuralChess.Engine
 
         private int QuiescenceSearch(Board board, int aiColour, int multiplier, int alpha, int beta)
         {
-            int standPat;
+            int standPat = -30000;
+            bool isInCheck = board.IsInCheck(board.ActiveColour);
+            int bestGain;
+            bool isMaximising = aiColour == board.ActiveColour;
 
-            if (UseNNUE)
+            if (!isInCheck)
             {
-                int activePlayerScore = NNUE.GetBoardValue(board.ActiveColour);
-                standPat = (board.ActiveColour == aiColour) ? activePlayerScore : -activePlayerScore;
-            }
-            else standPat = board.GetBoardValue() * multiplier;
-            bool isMaximising = (aiColour == board.ActiveColour);
+                if (UseNNUE)
+                {
+                    int activePlayerScore = NNUE.GetBoardValue(board.ActiveColour);
+                    standPat = (board.ActiveColour == aiColour) ? activePlayerScore : -activePlayerScore;
+                }
+                else standPat = board.GetBoardValue() * multiplier;
 
-            if (isMaximising)
-            {
-                if (standPat >= beta) return beta;
-                if (standPat > alpha) alpha = standPat;
+                if (isMaximising)
+                {
+                    if (standPat >= beta) return beta;
+                    if (standPat > alpha) alpha = standPat;
+                }
+                else
+                {
+                    if (standPat <= alpha) return alpha;
+                    if (standPat < beta) beta = standPat;
+                }
+                bestGain = standPat;
             }
             else
             {
-                if (standPat <= alpha) return alpha;
-                if (standPat < beta) beta = standPat;
+                bestGain = (aiColour == board.ActiveColour) ? -30000 : 30000;
             }
 
-            int bestGain = standPat;
-
-            Span<Move> captures = stackalloc Move[79];
+            Span<Move> captures = stackalloc Move[218];
             int capturesCount = 0;
-            MoveGenerator.GenerateAllCaptures(board, ref captures, ref capturesCount);
-            captures = captures[..capturesCount];
+            if (isInCheck)
+            {
+                MoveGenerator.GenerateAllMoves(board, ref captures, ref capturesCount);
+            }
+            else
+            {            
+                MoveGenerator.GenerateAllCaptures(board, ref captures, ref capturesCount);
+            }
 
+            captures = captures[..capturesCount];
             OrderMoves(captures, board);
 
             for (int m = 0; m < captures.Length; m++)
