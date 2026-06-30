@@ -7,13 +7,13 @@ namespace NeuralChess.Engine
     {
         private const string FathomLibrary = "fathom";
 
-        [DllImport(FathomLibrary, CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(FathomLibrary, EntryPoint = "tb_init", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
         public static extern bool tb_init(string path);
 
-        [DllImport(FathomLibrary, CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(FathomLibrary, EntryPoint = "tb_free", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
         public static extern void tb_free();
 
-        [DllImport(FathomLibrary, CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(FathomLibrary, EntryPoint = "tb_probe_wdl_impl", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
         public static extern uint tb_probe_wdl(
             ulong white, 
             ulong black, 
@@ -23,8 +23,6 @@ namespace NeuralChess.Engine
             ulong bishops, 
             ulong knights, 
             ulong pawns, 
-            uint rule50, 
-            uint castling, 
             uint ep, 
             bool turn);
     }

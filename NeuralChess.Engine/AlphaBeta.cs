@@ -217,8 +217,6 @@ namespace NeuralChess.Engine
                     board.Pieces[Piece.WhiteBishop] | board.Pieces[Piece.BlackBishop],
                     board.Pieces[Piece.WhiteKnight] | board.Pieces[Piece.BlackKnight],
                     board.Pieces[Piece.WhitePawn] | board.Pieces[Piece.BlackPawn],
-                    (uint)0,
-                    (uint)board.CastleRights,
                     (uint)(board.EnPassantSquare == -1 ? 0 : board.EnPassantSquare),
                     board.ActiveColour == Colour.White
                 ) - 2);

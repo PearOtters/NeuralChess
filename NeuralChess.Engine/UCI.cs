@@ -28,7 +28,6 @@ namespace NeuralChess.Engine
                 if (command == "uci")
                 {
                     response = $"id name {engine.Name}\nid author Pierre Outters\noption name SyzygyPath type string default <empty>\nuciok";
-                    
                 }
                 else if (command == "isready")
                 {
@@ -86,11 +85,12 @@ namespace NeuralChess.Engine
                     SyzygyLocal.tb_free();
                     break;
                 }
-                Console.WriteLine(response);
-                if (toLog && response != "")
+                if (response != "")
                 {
-                    File.AppendAllText("log.txt", response + "\n\n");
+                    Console.WriteLine(response);
+                    response += "\n";
                 }
+                if (toLog) File.AppendAllText("log.txt", response + "\n");
             }
         }
 
