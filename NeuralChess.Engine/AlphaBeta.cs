@@ -194,7 +194,6 @@ namespace NeuralChess.Engine
         private int RecursiveMinMaxed(Board board, int depth, int aiColour, int multiplier, int alpha, int beta)
         {
             NodesSearched++;
-
             if ((NodesSearched & 2047) == 0)
             {
                 if (SearchTimer.ElapsedMilliseconds >= MaximumTime)
@@ -205,6 +204,24 @@ namespace NeuralChess.Engine
             if (TimeIsUp)
             {
                 return 0;
+            }
+
+            if (board.totalPieces < 6)
+            {
+                return 15000 * (int)(SyzygyLocal.tb_probe_wdl(
+                    board.Colours[Colour.White],
+                    board.Colours[Colour.Black],
+                    board.Pieces[Piece.WhiteKing] | board.Pieces[Piece.BlackKing],
+                    board.Pieces[Piece.WhiteQueen] | board.Pieces[Piece.BlackQueen],
+                    board.Pieces[Piece.WhiteRook] | board.Pieces[Piece.BlackRook],
+                    board.Pieces[Piece.WhiteBishop] | board.Pieces[Piece.BlackBishop],
+                    board.Pieces[Piece.WhiteKnight] | board.Pieces[Piece.BlackKnight],
+                    board.Pieces[Piece.WhitePawn] | board.Pieces[Piece.BlackPawn],
+                    (uint)0,
+                    (uint)board.CastleRights,
+                    (uint)(board.EnPassantSquare == -1 ? 0 : board.EnPassantSquare),
+                    board.ActiveColour == Colour.White
+                ) - 2);
             }
 
             if (depth == 0)
@@ -460,7 +477,6 @@ namespace NeuralChess.Engine
                     }
                 }
             }
-
             return bestGain;
         }
     }

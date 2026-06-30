@@ -83,6 +83,7 @@ namespace NeuralChess.Engine
                 }
                 else if (command == "quit")
                 {
+                    SyzygyLocal.tb_free();
                     break;
                 }
                 Console.WriteLine(response);
