@@ -15,6 +15,7 @@ namespace NeuralChess.Engine
 
             while (true)
             {
+                string response = "";
                 string? input = Console.ReadLine();
                 if (string.IsNullOrWhiteSpace(input)) continue;
                 if (toLog)
@@ -26,17 +27,15 @@ namespace NeuralChess.Engine
 
                 if (command == "uci")
                 {
-                    Console.WriteLine($"id name {engine.Name}");
-                    Console.WriteLine("id author Pierre Outters");
-                    Console.WriteLine("option name SyzygyPath type string default <empty>");
-                    Console.WriteLine("uciok");
+                    response = $"id name {engine.Name}\nid author Pierre Outters\noption name SyzygyPath type string default <empty>\nuciok";
+                    
                 }
                 else if (command == "isready")
                 {
                     NNUE.Initialise();
                     Zobrist.Initialise();
                     AlphaBeta.Initialise();
-                    Console.WriteLine("readyok");
+                    response = "readyok";
                 }
                 else if (command == "position")
                 {
@@ -58,7 +57,7 @@ namespace NeuralChess.Engine
                     {
                         maximumDepth = int.Parse(tokens[maxDepthIndex + 1]);
                     }
-                    engine.Play(board, maximumTime, maximumDepth);
+                    engine.Play(board, ref response, toLog, maximumTime, maximumDepth);
                 }
                 else if (command == "setoption")
                 {
@@ -76,14 +75,8 @@ namespace NeuralChess.Engine
                                 string tbPath = string.Join(" ", tokens.Skip(valueIndex + 1));
                                 
                                 bool success = SyzygyLocal.tb_init(tbPath);
-                                if (success)
-                                {
-                                    Console.WriteLine($"info string Syzygy tablebases successfully loaded from {tbPath}");
-                                }
-                                else
-                                {
-                                    Console.WriteLine("info string Warning: Failed to load Syzygy tablebases from provided path.");
-                                }
+                                if (success) response = $"info string Syzygy tablebases successfully loaded from {tbPath}";
+                                else response = "info string Warning: Failed to load Syzygy tablebases from provided path.";
                             }
                         }
                     }
@@ -91,6 +84,11 @@ namespace NeuralChess.Engine
                 else if (command == "quit")
                 {
                     break;
+                }
+                Console.WriteLine(response);
+                if (toLog && response != "")
+                {
+                    File.AppendAllText("log.txt", response + "\n");
                 }
             }
         }

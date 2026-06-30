@@ -1,32 +1,45 @@
-using System;
-using System.Formats.Asn1;
-using System.Net.Http;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Threading.Tasks;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
 
 namespace NeuralChess.Engine
 {
     public class UnexpectedCategoryException(string? message) : Exception(message) { }
     public static class SyzygyAPI
     {
-        private static readonly HttpClient client = new HttpClient();
         private const string BaseUrl = "https://tablebase.lichess.ovh/standard?fen=";
 
         public static async Task<SyzygyResponse?> ProbePositionAsync(string fen)
         {
             try
             {
-                string requestUrl = BaseUrl + Uri.EscapeDataString(fen);
-                HttpResponseMessage response = await client.GetAsync(requestUrl);
-                
-                if (!response.IsSuccessStatusCode)
+                string formattedFen = fen.Replace(" ", "_");
+                string requestUrl = BaseUrl + formattedFen;
+
+                bool isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
+                ProcessStartInfo psi = new()
                 {
-                    return null; 
+                    FileName = isWindows ? "curl.exe" : "curl",
+                    Arguments = $"-s -A \"NeuralChess/1.0\" \"{requestUrl}\"",
+                    RedirectStandardOutput = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                };
+
+                psi.EnvironmentVariables.Remove("LD_LIBRARY_PATH");
+
+                using Process? process = Process.Start(psi);
+                if (process == null) return null;
+
+                string jsonResponse = await process.StandardOutput.ReadToEndAsync();
+                await process.WaitForExitAsync();
+
+                if (string.IsNullOrWhiteSpace(jsonResponse) || process.ExitCode != 0)
+                {
+                    return null;
                 }
 
-                string jsonResponse = await response.Content.ReadAsStringAsync();
-                
                 return JsonSerializer.Deserialize<SyzygyResponse>(jsonResponse, new JsonSerializerOptions 
                 { 
                     PropertyNameCaseInsensitive = true 
@@ -34,7 +47,8 @@ namespace NeuralChess.Engine
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Syzygy API error: {ex.Message}");
+                File.AppendAllText("log.txt", $"Syzygy API error: {ex.Message}\n");
+                File.AppendAllText("log.txt", $"Syzygy API error: {ex.InnerException}\n");
                 return null;
             }
         }

@@ -10,6 +10,6 @@ namespace NeuralChess.Engine
         public byte IrreversibleTurn = 1;
 
 
-        public abstract void Play(Board board, int maximumTime, int maximumDepth);
+        public abstract void Play(Board board, ref string response, bool toLog, int maximumTime, int maximumDepth);
     }
 }

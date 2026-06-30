@@ -27,7 +27,7 @@ namespace NeuralChess.Engine
             }
         }
 
-        public override void Play(Board board, int maximumTime, int maximumDepth)
+        public override void Play(Board board, ref string response, bool toLog, int maximumTime, int maximumDepth)
         {
             SearchTimer.Restart();
             NodesSearched = 0;
@@ -41,7 +41,28 @@ namespace NeuralChess.Engine
                     SyzygyMove? bestMove = syzygyResponse.GetBestMove();
                     if (bestMove != null)
                     {
-                        Console.WriteLine($"bestmove {bestMove.Uci}");
+                        response = $"bestmove {bestMove.Uci}";
+                        if (toLog)
+                        {
+                            double timeTaken = SearchTimer.ElapsedMilliseconds / 1000d;
+                            Move move = Move.GetMoveFromUCI(board, bestMove.Uci);
+                            int tempMultiplier = board.ActiveColour == Colour.White ? 1 : -1;
+                            File.AppendAllText("log.txt", "Used Syzygy tablebase\n");
+                            File.AppendAllText("log.txt", $"Tablebase evaluation: {syzygyResponse.Category}\n");
+                            File.AppendAllText("log.txt", $"time taken: {timeTaken}\n");
+                            if (UseNNUE) File.AppendAllText("log.txt", $"pre move NNUE evaluation: {NNUE.GetBoardValue(board.ActiveColour) / 100d}\n");
+                            File.AppendAllText("log.txt", $"pre move neural network evaluation: {NeuralNetworkHandler.GetBoardValue(board, board.ActiveColour) / 100d}\n");
+                            File.AppendAllText("log.txt", $"pre move static evaluation: {board.GetBoardValue() * tempMultiplier / 100d}\n");
+                            move.MovePiece(board);
+                            board.ActiveColour ^= 1;
+                            if (UseNNUE) NNUE.UpdateAccumulator(move);
+                            if (UseNNUE) File.AppendAllText("log.txt", $"post move NNUE evaluation: {-NNUE.GetBoardValue(board.ActiveColour) / 100d}\n");
+                            File.AppendAllText("log.txt", $"post move neural network evaluation: {NeuralNetworkHandler.GetBoardValue(board, board.ActiveColour ^ 1) / 100d}\n");
+                            File.AppendAllText("log.txt", $"post move static evaluation: {board.GetBoardValue() * tempMultiplier / 100d}\n\n");
+                            move.ReverseMove(board);
+                            board.ActiveColour ^= 1;
+                            if (UseNNUE) NNUE.ReverseAccumulator(move);
+                        }
                         return;
                     }
                 }
@@ -70,7 +91,7 @@ namespace NeuralChess.Engine
             }
             if (legalMovesCount == 0)
             {
-                Console.WriteLine("bestmove (none)");
+                response = "bestmove (none)";
                 return;
             }
 
@@ -149,23 +170,25 @@ namespace NeuralChess.Engine
                     }
                 }
             }
-            Console.WriteLine($"bestmove {currentBestMove.ToUCI()}");
-
-            double timeTaken = SearchTimer.ElapsedMilliseconds / 1000d;
-            File.AppendAllText("log.txt", $"time taken: {timeTaken}\n");
-            File.AppendAllText("log.txt", $"depth completed: {completedDepth}\n");
-            if (UseNNUE) File.AppendAllText("log.txt", $"pre move NNUE evaluation: {(board.ActiveColour == aiColour ? NNUE.GetBoardValue(board.ActiveColour) : -NNUE.GetBoardValue(board.ActiveColour)) / 100d}\n");
-            File.AppendAllText("log.txt", $"pre move neural network evaluation: {NeuralNetworkHandler.GetBoardValue(board, aiColour) / 100d}\n");
-            File.AppendAllText("log.txt", $"pre move static evaluation: {board.GetBoardValue() * multiplier / 100d}\n");
-            currentBestMove.MovePiece(board);
-            board.ActiveColour ^= 1;
-            if (UseNNUE) NNUE.UpdateAccumulator(currentBestMove);
-            if (UseNNUE) File.AppendAllText("log.txt", $"post move NNUE evaluation: {(board.ActiveColour == aiColour ? NNUE.GetBoardValue(board.ActiveColour) : -NNUE.GetBoardValue(board.ActiveColour)) / 100d}\n");
-            File.AppendAllText("log.txt", $"post move neural network evaluation: {NeuralNetworkHandler.GetBoardValue(board, aiColour) / 100d}\n");
-            File.AppendAllText("log.txt", $"post move static evaluation: {board.GetBoardValue() * multiplier / 100d}\n\n");
-            currentBestMove.ReverseMove(board);
-            board.ActiveColour ^= 1;
-            if (UseNNUE) NNUE.ReverseAccumulator(currentBestMove);
+            response = $"bestmove {currentBestMove.ToUCI()}";
+            if (toLog)
+            {
+                double timeTaken = SearchTimer.ElapsedMilliseconds / 1000d;
+                File.AppendAllText("log.txt", $"time taken: {timeTaken}\n");
+                File.AppendAllText("log.txt", $"depth completed: {completedDepth}\n");
+                if (UseNNUE) File.AppendAllText("log.txt", $"pre move NNUE evaluation: {NNUE.GetBoardValue(board.ActiveColour) / 100d}\n");
+                File.AppendAllText("log.txt", $"pre move neural network evaluation: {NeuralNetworkHandler.GetBoardValue(board, aiColour) / 100d}\n");
+                File.AppendAllText("log.txt", $"pre move static evaluation: {board.GetBoardValue() * multiplier / 100d}\n");
+                currentBestMove.MovePiece(board);
+                board.ActiveColour ^= 1;
+                if (UseNNUE) NNUE.UpdateAccumulator(currentBestMove);
+                if (UseNNUE) File.AppendAllText("log.txt", $"post move NNUE evaluation: {-NNUE.GetBoardValue(board.ActiveColour) / 100d}\n");
+                File.AppendAllText("log.txt", $"post move neural network evaluation: {NeuralNetworkHandler.GetBoardValue(board, aiColour) / 100d}\n");
+                File.AppendAllText("log.txt", $"post move static evaluation: {board.GetBoardValue() * multiplier / 100d}\n\n");
+                currentBestMove.ReverseMove(board);
+                board.ActiveColour ^= 1;
+                if (UseNNUE) NNUE.ReverseAccumulator(currentBestMove);
+            }
         }
 
         private int RecursiveMinMaxed(Board board, int depth, int aiColour, int multiplier, int alpha, int beta)
